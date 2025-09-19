@@ -1,0 +1,115 @@
+*{margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 62.5%; 
+}
+
+:root{
+  --mcol0: #031D44;
+  --mcol1: #04395E;
+  --mcol2: #F4F7F5;
+  --mcol3: #808A9F;
+  --mcol4: #C83E4D;
+  --darkCol: #1B1B1B;
+}
+
+body{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  padding: 1rem;
+  background-color: var(--darkCol);
+}
+
+h1{
+  padding: 0;
+  margin: 0;
+  font-size: 10rem;
+  color: var(--mcol2);
+}
+h2{
+  padding: 0;
+  margin: auto;
+  font-size: 8rem;
+  color: var(--mcol2);
+}
+
+.vbox-container{
+  width: 40rem;
+  margin-top: 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+}
+
+.item{
+  width: 100%;
+  height: 7rem;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  border: 0.3rem solid var(--mcol3);
+  border-radius: 1rem;
+  background-color: var(--mcol2);
+  color: var(--mcol1);
+  transition: background-color 0.3s ease-out, color 0.3s ease-out;
+}
+.item:hover{
+  background-color: var(--mcol3);
+  color: var(--mcol2);
+  font-weight: 500;
+}
+.item:active{
+  border: 0.3rem solid var(--mcol2);
+}
+
+.container{
+  margin: 1rem;
+  width: 80vw;
+  height: 80vw;
+  border: 0.5rem solid var(--mcol1);
+}
+
+#chessBoard{
+  width: 100%;
+  height:100%;
+  margin: auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+.square {
+  float: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.light {
+  background-color: var(--mcol2);
+}
+.dark {
+  background-color: var(--mcol3);
+}
+.square:hover{
+  background-color: #C83E4D;
+}
+
+.piece{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.piece img{
+  width: 100%;
+  height: 100%;
+}
