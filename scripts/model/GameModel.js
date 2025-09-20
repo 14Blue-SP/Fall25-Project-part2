@@ -2,6 +2,7 @@ class GameModel {
   static #INSTANCE = new GameModel();
   files=8; ranks=8;
   whiteKingIndex; blackKingIndex;
+  enPassantSquare = -1;
 
   #MG = new MoveGenerator();
 
@@ -19,19 +20,19 @@ class GameModel {
     for(let c=0; c<2; c++){
       // Place pawns
       for(let i=0; i<this.files; i++){
-        this.setPiece(i, c%2==0 ? 6:1, c%2==0 ? "P":"p");
+        this.setPiece(i, c%2==0 ? 6:1, c%2==0 ? "O":"p");
       }
       // Place rooks
       this.setPiece(0, c%2==0 ? 7:0, c%2==0 ? "R":"r");
       this.setPiece(7, c%2==0 ? 7:0, c%2==0 ? "R":"r");
       // Place knights
-      this.setPiece(1, c%2==0 ? 7:0, c%2==0 ? "N":"n");
-      this.setPiece(6, c%2==0 ? 7:0, c%2==0 ? "N":"n");
+      this.setPiece(1, c%2==0 ? 7:0, c%2==0 ? "O":"n");
+      this.setPiece(6, c%2==0 ? 7:0, c%2==0 ? "O":"n");
       // Place bishops
       this.setPiece(2, c%2==0 ? 7:0, c%2==0 ? "B":"b");
       this.setPiece(5, c%2==0 ? 7:0, c%2==0 ? "B":"b");
       // Place queens
-      this.setPiece(3, c%2==0 ? 7:0, c%2==0 ? "Q":"q");
+      this.setPiece(3, c%2==0 ? 7:0, c%2==0 ? "O":"q");
       // Place kings
       this.setPiece(4, c%2==0 ? 7:0, c%2==0 ? "K":"k");
       if(c%2==0){
@@ -61,6 +62,12 @@ class GameModel {
   getIndex(file, rank){
     return rank*this.ranks + file;
   }
+
+  getCoordinates(index){
+    let col = index%this.files;
+    let row = parseInt(index/this.ranks);
+    return {file: col, rank: row};
+  }
   //#endregion
 
   //#region Piece Methods
@@ -73,7 +80,8 @@ class GameModel {
     this.#pieces = [];
     for(let i=0; i<this.#chessBoard.length; i++){
       if(!(this.#chessBoard[i]===" ")){
-        let piece = Chess.Piece(i%this.files, parseInt(i/this.ranks), isUpperCase(this.#chessBoard[i]))
+        let square = this.getCoordinates(i);
+        let piece = Chess.Piece(square.file, square.rank, isUpperCase(this.#chessBoard[i]))
         piece.type = getType(this.#chessBoard[i]);
         if(piece.type===null){continue;}
         piece.img=`pieceImages/${piece.isWhite?"white":"black"}-${piece.type}.png`;
@@ -91,17 +99,18 @@ class GameModel {
   //#region Move Methods
   getPossibleMoves(){
     var list = [];
+    if(DEBUG){console.group("Getting Possible Moves...")}
     for(let i=0; i<this.#chessBoard.length; i++){
       switch (this.#chessBoard[i]) {
-        //case "P" : list.concat(this.#MG.possiblePawn(i)); break;
-        //case "N" : list.addAll(possibleKnight(i)); break;
+        case "P" : list.push(...this.#MG.possiblePawn(i)); break;
+        case "N" : list.push(...this.#MG.possibleKnight(i)); break;
         case "R" : list.push(...this.#MG.possibleRook(i)); break;
         case "B" : list.push(...this.#MG.possibleBishop(i)); break;
         case "Q" : list.push(...this.#MG.possibleQueen(i)); break;
         case "K" : list.push(...this.#MG.possibleKing(i)); break;
       }
     }
-    
+    if(DEBUG){console.groupEnd();}
     return list;
   }
   //#endregion

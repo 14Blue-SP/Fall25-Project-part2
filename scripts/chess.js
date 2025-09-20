@@ -9,14 +9,21 @@ class Chess{
     GM.newStandardChessBoard();
     
 
-    GM.setPiece(3,5,"R");
+    GM.setPiece(4,5,"K");
+    GM.setPiece(4,7," ");
+    GM.whiteKingIndex = GM.getIndex(4,5);
+    //GM.setPiece(5,4,"p");
+    GM.setPiece(6,1,"P");
+    GM.setPiece(2,6,"P");
 
     GM.printBoard();
     placePieces();
 
-    console.group("Possible Moves:");
-    console.log(GM.getPossibleMoves().toString());
-    console.groupEnd();
+    if(DEBUG){
+      console.group("Possible Moves:");
+      console.log(GM.getPossibleMoves().toString());
+      console.groupEnd();
+    }
   }
 
   static Piece(col, row, isWhite){

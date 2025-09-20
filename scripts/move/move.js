@@ -14,7 +14,9 @@ class Move {
     return false;
   }
   toString(){
-    return `{${this.col}${this.row}${this.newCol}${this.newRow}${this.capture}}`;
+    let str = `${this.col}${this.row}${this.newCol}${this.newRow}${this.capture}`;
+    if(this.special!==""){str = str+this.special}
+    return str;
   }
 }
 
@@ -67,5 +69,53 @@ class RookMove extends Move{
 
   pieceCollision(){
     return isVerticalCollision(this) || isHorizontalCollision(this);
+  }
+}
+
+class KnightMove extends Move{
+  constructor(col, row, newCol, newRow, capture){
+    super(col, row, newCol, newRow, capture)
+  }
+
+  isValidMove(){
+    return Math.abs(this.col-this.newCol) * Math.abs(this.row-this.newRow) == 2;
+  }
+}
+
+class PawnMove extends Move{
+  constructor(col, row, newCol, newRow, capture){
+    super(col, row, newCol, newRow, capture)
+  }
+
+  isValidMove(){
+    let direction = -1;
+
+    // Promoton
+    let promotonRank = 0;
+    if(this.newRow == promotonRank){
+      this.special = "=";
+    }
+
+    //Standard Move
+    if(this.col===this.newCol && this.row+direction === this.newRow && GM.getChessBoard()[GM.getIndex(this.newCol, this.newRow)]==" "){
+      return true;
+    }
+
+    //First Double Move
+    if(this.row===6 && this.col===this.newCol && this.row+2*direction === this.newRow && GM.getChessBoard()[GM.getIndex(this.newCol, this.newRow)]==" " && GM.getChessBoard()[GM.getIndex(this.newCol, this.row+direction)]==" "){
+      return true;
+    }
+
+    //capture
+    if(Math.abs(this.col-this.newCol)==1 && this.row+direction==this.newRow && (GM.getChessBoard()[GM.getIndex(this.newCol, this.newRow)]) !== " "){
+      return true;
+    }
+
+    //enPassant
+    if(GM.enPassantSquare==GM.getIndex(this.newCol, this.newRow) && Math.abs(this.col-this.newCol)==1 && this.row+direction==this.newRow){
+      this.special = "e.p.";
+      return true;
+    }
+    return false;
   }
 }

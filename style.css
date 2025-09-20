@@ -98,9 +98,11 @@ h2{
 .dark {
   background-color: var(--mcol3);
 }
+
 .square:hover{
   background-color: var(--mcol4);
 }
+
 
 .coordinate{
   color: var(--mcol0);
@@ -132,13 +134,7 @@ h2{
   width: 100%;
   z-index: 0;
   cursor: pointer;
-  /*
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  cursor: pointer;
-  */
+
 }
 .piece img{
   max-width: 100%;

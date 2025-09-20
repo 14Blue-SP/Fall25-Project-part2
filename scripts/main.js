@@ -1,5 +1,6 @@
 const board=document.getElementById("chessBoard");
 const GM=GameModel.getInstance();
+const DEBUG = true;
 
 game = new Chess();
 
@@ -16,6 +17,8 @@ function createBoard(){
       square.id = getCoordinate(file, rank)
       //square.dataset.file=file;
       //square.dataset.rank=rank;
+      square.addEventListener("dragover", allowDrop);
+      square.addEventListener("drop", drop);
       spaces.push(square);
       board.appendChild(square);
     }
@@ -29,7 +32,6 @@ function placePieces(){
   GM.makePieces();
   GM.getPieces().forEach(piece => {
     let div = document.createElement("div");
-    div.id = `${piece.isWhite?"white":"black"} ${piece.type}`;
     div.className="piece";
     div.dataset.type = piece.type;
     div.dataset.isWhite = piece.isWhite;
@@ -37,9 +39,13 @@ function placePieces(){
     let icon = document.createElement("img");
     icon.src=piece.img;
     icon.alt=div.id;
+    icon.setAttribute("draggable", false);
     div.appendChild(icon);
+    div.addEventListener("dragstart", drag);
+    div.setAttribute("draggable", true);
     pieces.push(div);
     spaces.find(space => space.id === div.dataset.position).appendChild(div);
+    div.id = `${piece.type} ${div.parentElement.id}` ;
   });
 }
 
@@ -102,4 +108,22 @@ function isDiagonalCollision(move) {
     }
   }
   return false;
+}
+
+function allowDrop(ev){
+  ev.preventDefault();
+}
+
+function drag(ev){
+  const piece=ev.target;
+  ev.dataTransfer.setData("text", piece.id);
+}
+
+function drop(ev){
+  ev.preventDefault();
+  let data = ev.dataTransfer.getData("text");
+  const piece=document.getElementById(data);
+  const targetSpace = ev.currentTarget;
+  let targetSpaceId = targetSpace.id;
+  targetSpace.appendChild(piece); //makemove
 }
