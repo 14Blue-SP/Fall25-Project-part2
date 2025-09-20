@@ -9,7 +9,7 @@ class Chess{
     GM.newStandardChessBoard();
     
 
-    GM.setPiece(0,5,"K");
+    GM.setPiece(3,5,"R");
 
     GM.printBoard();
     placePieces();

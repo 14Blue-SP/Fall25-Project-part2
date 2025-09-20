@@ -75,6 +75,7 @@ class GameModel {
       if(!(this.#chessBoard[i]===" ")){
         let piece = Chess.Piece(i%this.files, parseInt(i/this.ranks), isUpperCase(this.#chessBoard[i]))
         piece.type = getType(this.#chessBoard[i]);
+        if(piece.type===null){continue;}
         piece.img=`pieceImages/${piece.isWhite?"white":"black"}-${piece.type}.png`;
         this.#pieces.push(piece);
       }
@@ -94,9 +95,9 @@ class GameModel {
       switch (this.#chessBoard[i]) {
         //case "P" : list.concat(this.#MG.possiblePawn(i)); break;
         //case "N" : list.addAll(possibleKnight(i)); break;
-        //case "R" : list.addAll(possibleRook(i)); break;
-        //case "B" : list.addAll(possibleBishop(i)); break;
-        //case "Q" : list.addAll(possibleQueen(i)); break;
+        case "R" : list.push(...this.#MG.possibleRook(i)); break;
+        case "B" : list.push(...this.#MG.possibleBishop(i)); break;
+        case "Q" : list.push(...this.#MG.possibleQueen(i)); break;
         case "K" : list.push(...this.#MG.possibleKing(i)); break;
       }
     }

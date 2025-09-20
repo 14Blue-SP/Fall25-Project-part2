@@ -56,9 +56,50 @@ function getType(str){
     case 112 : return "pawn"; break;
     case 113 : return "queen"; break;
     case 114 : return "rook"; break;
+    default : return null;
   }
 }
 
 function getCoordinate(col, row){
   return `${String.fromCharCode(97+col)}${GM.ranks-row}`;
+}
+
+function isVerticalCollision(move) {
+  if (move.col === move.newCol) {
+    let start = Math.min(move.row, move.newRow) + 1;
+    let end = Math.max(move.row, move.newRow);
+    for (let r = start; r < end; r++) {
+      if (GM.getChessBoard()[GM.getIndex(move.col, r)]!==" ") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function isHorizontalCollision(move) {
+  if (move.row === move.newRow) {
+    let start = Math.min(move.col, move.newCol) + 1;
+    let end = Math.max(move.col, move.newCol);
+    for (let c = start; c < end; c++) {
+      if (GM.getChessBoard()[GM.getIndex(c, move.row)]!==(" ")) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function isDiagonalCollision(move) {
+  if (Math.abs(move.col-move.newCol) === Math.abs(move.row-move.newRow)) {
+    colStep = (move.newCol-move.col) / Math.abs(move.newCol-move.col);
+    rowStep = (move.newRow-move.row) / Math.abs(move.newRow-move.row);
+    steps = Math.abs(move.col-move.newCol);
+    for (let i = 1; i < steps; i++) {
+      if (GM.getChessBoard()[GM.getIndex(move.col + i * colStep, move.row + i * rowStep)]!==" ") {
+        return true;
+      }
+    }
+  }
+  return false;
 }
