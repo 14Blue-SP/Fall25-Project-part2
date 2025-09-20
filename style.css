@@ -70,17 +70,20 @@ h2{
 
 .container{
   margin: 1rem;
+  position: relative;
   width: 80vw;
   height: 80vw;
-  border: 0.5rem solid var(--mcol1);
+  border: 0.5rem solid var(--mcol1)
 }
 
 #chessBoard{
   width: 100%;
   height:100%;
-  margin: auto;
+  left: 0;
+  right: 0;
   display: flex;
   flex-wrap: wrap;
+  z-index: -1;
 }
 .square {
   float: left;
@@ -96,20 +99,56 @@ h2{
   background-color: var(--mcol3);
 }
 .square:hover{
-  background-color: #C83E4D;
+  background-color: var(--mcol4);
+}
+
+.coordinate{
+  color: var(--mcol0);
+  font-weight: bold;
+  font-size: 2rem;
+  z-index: 1;
+}
+.horizontal{
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  top: 97%;
+  left: 5%;
+  width: 100%;
+  
+}
+.vertical{
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  top: -5%;
+  left: 0.5%;
+  height: 100%;
 }
 
 .piece{
   width: 100%;
-  height: 100%;
+  z-index: 0;
+  cursor: pointer;
+  /*
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1;
   cursor: pointer;
+  */
+}
+.piece img{
+  max-width: 100%;
+  width: 100%;
+  height: auto;
 }
 
-.piece img{
-  width: 100%;
-  height: 100%;
+@media (min-width:500px){
+  .chessBoard{
+    width: 500px;
+    height: 500px;
+  }
 }
