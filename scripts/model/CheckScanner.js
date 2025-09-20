@@ -30,7 +30,7 @@ class CheckScanner{
       GM.whiteKingIndex = GM.getIndex(move.newCol,move.newRow);
     }
     let isSafe = this.willCheck();
-    console.log(`"Move: ${move.toString()} isSafe ? ${isSafe}`);
+    if(DEBUG){console.log(`"Move: ${move.toString()} isSafe ? ${isSafe}`);}
     GM.setPiece(move.col, move.row, piece);
     GM.setPiece(move.newCol, move.newRow, move.capture);
     if(piece === "K"){

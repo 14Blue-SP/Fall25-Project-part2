@@ -85,14 +85,20 @@ class KnightMove extends Move{
 class PawnMove extends Move{
   constructor(col, row, newCol, newRow, capture){
     super(col, row, newCol, newRow, capture)
+
+    // Promotion
+    let promotionRank = 0;
+    if(this.newRow == promotionRank){
+      this.special = "=";
+    }
   }
 
   isValidMove(){
     let direction = -1;
 
-    // Promoton
-    let promotonRank = 0;
-    if(this.newRow == promotonRank){
+    // Promotion
+    let promotionRank = 0;
+    if(this.newRow == promotionRank){
       this.special = "=";
     }
 
@@ -112,7 +118,7 @@ class PawnMove extends Move{
     }
 
     //enPassant
-    if(GM.enPassantSquare==GM.getIndex(this.newCol, this.newRow) && Math.abs(this.col-this.newCol)==1 && this.row+direction==this.newRow){
+    if(GM.enPassantIndex==GM.getIndex(this.newCol, this.newRow) && Math.abs(this.col-this.newCol)==1 && this.row+direction==this.newRow){
       this.special = "e.p.";
       return true;
     }

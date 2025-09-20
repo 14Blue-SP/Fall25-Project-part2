@@ -1,6 +1,6 @@
 const board=document.getElementById("chessBoard");
 const GM=GameModel.getInstance();
-const DEBUG = true;
+const DEBUG = false;
 
 game = new Chess();
 
@@ -28,8 +28,9 @@ function createBoard(){
 
 // Display pieces
 function placePieces(){
+  spaces.forEach(space => space.replaceChildren());
   pieces=[];
-  GM.makePieces();
+  //GM.makePieces();
   GM.getPieces().forEach(piece => {
     let div = document.createElement("div");
     div.className="piece";
@@ -116,14 +117,21 @@ function allowDrop(ev){
 
 function drag(ev){
   const piece=ev.target;
-  ev.dataTransfer.setData("text", piece.id);
+  //console.log(piece);
+  ev.dataTransfer.setData("text", piece.dataset.position);
 }
 
 function drop(ev){
   ev.preventDefault();
-  let data = ev.dataTransfer.getData("text");
-  const piece=document.getElementById(data);
-  const targetSpace = ev.currentTarget;
-  let targetSpaceId = targetSpace.id;
-  targetSpace.appendChild(piece); //makemove
+  const data = ev.dataTransfer.getData("text");
+  var piece=data;
+  var target = ev.currentTarget.id;
+  piece = piece.split("");
+  target = target.split("");
+  piece[0]=piece[0].charCodeAt(0)-97;
+  piece[1]=parseInt(8-piece[1]);
+  target[0]=target[0].charCodeAt(0)-97;
+  target[1]=parseInt(8-target[1]);
+  move = new Move(piece[0],piece[1],target[0],target[1],GM.getChessBoard()[GM.getIndex(target[0],target[1])]);
+  GM.makeMove(move);
 }

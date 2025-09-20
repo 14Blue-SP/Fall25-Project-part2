@@ -78,7 +78,7 @@ class MoveGenerator{
   possiblePawn(index){
     var list = [];
     let square = GM.getCoordinates(index);
-    if(DEBUG){console.group(`possiblePawn - {file: ${square.file}, rank: ${square.rank}}`);}
+    if(DEBUG){console.groupCollapsed(`possiblePawn - {file: ${square.file}, rank: ${square.rank}}`);}
     for(let i=0; i<GM.getChessBoard().length; i++){
       let newSquare = GM.getCoordinates(i);
       const move = new PawnMove(square.file,square.rank,newSquare.file,newSquare.rank,GM.getChessBoard()[GM.getIndex(newSquare.file,newSquare.rank)]);
@@ -86,7 +86,7 @@ class MoveGenerator{
         list.push(move);
       }
     }
-    if(DEBUG){console.groupEnd();}
+    if(DEBUG){console.groupEnd(`possiblePawn - {file: ${square.file}, rank: ${square.rank}}`);}
     return list;
   }
 }
