@@ -1,3 +1,4 @@
+const CS = new CheckScanner();
 const spaces=[]
 var pieces=[];
 
@@ -6,8 +7,16 @@ class Chess{
     console.log("Chess Game");
     createBoard();
     GM.newStandardChessBoard();
+    
+
+    GM.setPiece(0,5,"K");
+
     GM.printBoard();
     placePieces();
+
+    console.group("Possible Moves:");
+    console.log(GM.getPossibleMoves().toString());
+    console.groupEnd();
   }
 
   static Piece(col, row, isWhite){

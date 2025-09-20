@@ -26,6 +26,7 @@ function createBoard(){
 // Display pieces
 function placePieces(){
   pieces=[];
+  GM.makePieces();
   GM.getPieces().forEach(piece => {
     let div = document.createElement("div");
     div.id = `${piece.isWhite?"white":"black"} ${piece.type}`;

@@ -1,6 +1,9 @@
 class GameModel {
   static #INSTANCE = new GameModel();
   files=8; ranks=8;
+  whiteKingIndex; blackKingIndex;
+
+  #MG = new MoveGenerator();
 
   #chessBoard = new Array(this.files*this.ranks);
   #pieces = [];
@@ -9,8 +12,7 @@ class GameModel {
     return this.#INSTANCE;
   }
 
-  // Board Methods
-
+  //#region  Board Methods
   //Make new ChessBoard
   newStandardChessBoard(){
     this.clearBoard();
@@ -32,8 +34,12 @@ class GameModel {
       this.setPiece(3, c%2==0 ? 7:0, c%2==0 ? "Q":"q");
       // Place kings
       this.setPiece(4, c%2==0 ? 7:0, c%2==0 ? "K":"k");
+      if(c%2==0){
+        this.whiteKingIndex = this.getIndex(4,7);
+      } else {
+        this.blackKingIndex = this.getIndex(4,0);
+      }
     }
-    this.#makePieces();
   }
 
   getChessBoard(){
@@ -52,16 +58,18 @@ class GameModel {
     console.table(board);
   }
 
+  getIndex(file, rank){
+    return rank*this.ranks + file;
+  }
+  //#endregion
+
+  //#region Piece Methods
   setPiece(col, row, piece){
     this.#chessBoard[this.getIndex(col,row)] = piece;
   }
 
-  getIndex(file, rank){
-    return rank*this.ranks + file;
-  }
-
   //make pieces from board
-  #makePieces(){
+  makePieces(){
     this.#pieces = [];
     for(let i=0; i<this.#chessBoard.length; i++){
       if(!(this.#chessBoard[i]===" ")){
@@ -77,4 +85,23 @@ class GameModel {
   getPieces(){
     return this.#pieces;
   }
+  //#endregion
+
+  //#region Move Methods
+  getPossibleMoves(){
+    var list = [];
+    for(let i=0; i<this.#chessBoard.length; i++){
+      switch (this.#chessBoard[i]) {
+        //case "P" : list.concat(this.#MG.possiblePawn(i)); break;
+        //case "N" : list.addAll(possibleKnight(i)); break;
+        //case "R" : list.addAll(possibleRook(i)); break;
+        //case "B" : list.addAll(possibleBishop(i)); break;
+        //case "Q" : list.addAll(possibleQueen(i)); break;
+        case "K" : list.push(...this.#MG.possibleKing(i)); break;
+      }
+    }
+    
+    return list;
+  }
+  //#endregion
 }
