@@ -1,53 +1,54 @@
+const DEBUG = false;
 const board=document.getElementById("chessBoard");
 const GM=GameModel.getInstance();
-const DEBUG = false;
+var possibleSquares=[];
+const squares=document.getElementsByClassName("square");
+const pieces=document.getElementsByClassName("piece");
+const sprites = document.getElementsByTagName("img");
+
+var latestMove=null;
+document.addEventListener('keyup', UndoMove);
 
 game = new Chess();
 
 // Create squares
 function createBoard(){
-  for(let rank=0; rank<GM.files; rank++){
-    for(let file=0; file<GM.ranks; file++){
+  for(let rank=0; rank<GM.ranks; rank++){
+    for(let file=0; file<GM.files; file++){
       let square = document.createElement("div");
+      square.id = getCoordinate(file, rank)
+      square.addEventListener("dragover", endDrag);
+      square.addEventListener("drop", drop);
       square.className="square";
       if((file+rank)%2===0)square.classList.add("light");
       else square.classList.add("dark");
       square.style.width=100/GM.files+"%";
       square.style.height=100/GM.ranks+"%";
-      square.id = getCoordinate(file, rank)
-      //square.dataset.file=file;
-      //square.dataset.rank=rank;
-      square.addEventListener("dragover", allowDrop);
-      square.addEventListener("drop", drop);
-      spaces.push(square);
       board.appendChild(square);
     }
   }
-  //console.log(spaces);
 }
 
 // Display pieces
-function placePieces(){
-  spaces.forEach(space => space.replaceChildren());
-  pieces=[];
-  //GM.makePieces();
-  GM.getPieces().forEach(piece => {
-    let div = document.createElement("div");
-    div.className="piece";
-    div.dataset.type = piece.type;
-    div.dataset.isWhite = piece.isWhite;
-    div.dataset.position = getCoordinate(piece.col, piece.row);
+function createPieces(){
+  const _squares = Array.from(squares);
+  GM.getPieces().forEach(p => MakePiece(p, _squares));
+}
+
+function MakePiece(p, _squares){
+  let piece = document.createElement("div");
+    piece.className="piece";
+    piece.addEventListener("dragstart", drag);
+    piece.setAttribute("draggable", true);
+    _squares.find(square => square.id === getCoordinate(p.col, p.row)).appendChild(piece);
+    piece.id =`${p.type} ${piece.parentElement.id}`;
+
+    // add sprites to element
     let icon = document.createElement("img");
-    icon.src=piece.img;
-    icon.alt=div.id;
+    icon.src=p.img;
+    icon.alt=piece.id;
     icon.setAttribute("draggable", false);
-    div.appendChild(icon);
-    div.addEventListener("dragstart", drag);
-    div.setAttribute("draggable", true);
-    pieces.push(div);
-    spaces.find(space => space.id === div.dataset.position).appendChild(div);
-    div.id = `${piece.type} ${div.parentElement.id}` ;
-  });
+    piece.appendChild(icon);
 }
 
 function isUpperCase(str) {
@@ -111,27 +112,56 @@ function isDiagonalCollision(move) {
   return false;
 }
 
-function allowDrop(ev){
+//#region event functions
+function UndoMove(ev){
+  if(ev.key === ' '){
+    const _pieces = Array.from(pieces);
+    const _squares = Array.from(squares);
+    if(latestMove !== null){
+      GM.undoMove(latestMove);
+      let s1 = getCoordinate(latestMove.newCol, latestMove.newRow);
+      let s2 = getCoordinate(latestMove.col, latestMove.row);
+      const piece = _pieces.find(piece => piece.id.split(" ")[1] === s1);
+      const square = _squares.find(square => square.id === s2)
+      square.replaceChildren(piece);
+      piece.id =`${piece.id.split(" ")[0]} ${piece.parentElement.id}`;
+      if(latestMove.capture !== " "){
+        let piece = GM.getPieces().find(piece => piece.col===move.newCol && piece.row===move.newRow);
+        MakePiece(piece, _squares);
+      }
+    }
+    latestMove = null;
+  }
+}
+
+function endDrag(ev){
   ev.preventDefault();
 }
 
 function drag(ev){
   const piece=ev.target;
-  //console.log(piece);
-  ev.dataTransfer.setData("text", piece.dataset.position);
+  ev.dataTransfer.setData("text",piece.id);
 }
 
 function drop(ev){
   ev.preventDefault();
+  const _target = ev.currentTarget;
   const data = ev.dataTransfer.getData("text");
-  var piece=data;
-  var target = ev.currentTarget.id;
-  piece = piece.split("");
+  const piece=document.getElementById(data);
+  let position = data.split(" ")[1];
+  position = position.split(""); 
+  position[0] = position[0].charCodeAt(0)-97;
+  position[1] = parseInt(GM.ranks-position[1]);
+  let target = _target.id;
   target = target.split("");
-  piece[0]=piece[0].charCodeAt(0)-97;
-  piece[1]=parseInt(8-piece[1]);
-  target[0]=target[0].charCodeAt(0)-97;
-  target[1]=parseInt(8-target[1]);
-  move = new Move(piece[0],piece[1],target[0],target[1],GM.getChessBoard()[GM.getIndex(target[0],target[1])]);
-  GM.makeMove(move);
+  target[0] = target[0].charCodeAt(0)-97;
+  target[1] = parseInt(GM.ranks-target[1]);
+
+  move = new Move(position[0],position[1],target[0],target[1],GM.getChessBoard()[GM.getIndex(target[0],target[1])]);
+  if(GM.makeMove(move)){
+    _target.replaceChildren(piece);
+    piece.id =`${data.split(" ")[0]} ${piece.parentElement.id}`;
+    latestMove=move;
+  }
 }
+//#endregion

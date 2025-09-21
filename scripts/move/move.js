@@ -15,7 +15,7 @@ class Move {
   }
   toString(){
     let str = `${this.col}${this.row}${this.newCol}${this.newRow}${this.capture}`;
-    if(this.special!==""){str = str+this.special}
+    //if(this.special!==""){str = str+this.special}
     return str;
   }
 }
@@ -123,5 +123,19 @@ class PawnMove extends Move{
       return true;
     }
     return false;
+  }
+}
+
+class MinMaxMove extends Move{
+  constructor(move, score){
+    super(move.col, move.row, move.newCol, move.newRow, move.capture);
+    this.special = move.special;
+    this.score = score;
+  }
+
+  toString(){
+    let str = `Move: ${this.col}${this.row}${this.newCol}${this.newRow}${this.capture}, Score: ${this.score}`;
+    //if(this.special!==""){str = str+this.special}
+    return str;
   }
 }

@@ -13,8 +13,49 @@ class GameModel {
     return this.#INSTANCE;
   }
 
-  //#region  Board Methods
-  //Make new ChessBoard
+  MinMax(depth, min, max, move, isWhite){
+    if(depth===0){return new MinMaxMove(move, this.score());}//*(isWhite ? 1:-1));}
+
+    //#region Testing MinMax
+    const temp = parseInt(prompt("Number of moves:"));
+    console.log(`Number of Moves: ${temp}`);
+
+    let test=[];
+    for(let i=0; i<temp; i++){
+      test.push(new Move(1,1,1,1,"b"));
+    }
+    //#endregion
+    //Sort from best to worst;
+
+    isWhite = !isWhite;
+    //this.getPossibleMoves().forEach(element => {
+    for(let e of test){
+      this.makeMove(e);
+      this.flipBoard();
+      let pass = this.MinMax(depth-1, min, max, e, isWhite);
+      
+      this.flipBoard();
+      this.undoMove(e);
+
+      if(isWhite){
+        if(pass.score<=min){min=pass.score; if(depth==MAX_DEPTH){move=pass;}}
+      } else {
+        if(pass.score>=max){max=pass.score; if(depth==MAX_DEPTH){move=pass;}}
+      }
+      if(max>=min){
+        if(isWhite) {return new MinMaxMove(move, min);} else {return new MinMaxMove(move, max);}
+      }
+    }
+    if(isWhite) {return new MinMaxMove(move, min);} else {return new MinMaxMove(move, max);}
+  }
+
+  score(){
+    const score = parseInt(prompt("InputScore:"));
+    console.log(`InputScore: ${score}`);
+    return score;
+  }
+
+  //#region Board Methods
   newStandardChessBoard(){
     this.clearBoard();
     for(let c=0; c<2; c++){
@@ -42,7 +83,7 @@ class GameModel {
       }
     }
     this.printBoard();
-    placePieces();
+    createPieces();
   }
 
   getChessBoard(){
@@ -60,6 +101,18 @@ class GameModel {
     }
     this.makePieces();
     console.table(board);
+  }
+
+  flipBoard(){
+    let left=0; let right=this.#chessBoard.length-1;
+    while(left<right){
+      let temp = this.#chessBoard[left];
+      this.#chessBoard[left] = this.#chessBoard[right];
+      this.#chessBoard[right] = temp;
+
+      left++;
+      right--;
+    }
   }
 
   getIndex(file, rank){
@@ -91,7 +144,6 @@ class GameModel {
         this.#pieces.push(piece);
       }
     }
-    //console.log(this.#pieces);
   }
 
   getPieces(){
@@ -118,48 +170,49 @@ class GameModel {
   }
 
   makeMove(move){
+    let _move =  GetPossibleMoves().find(m => m.toString()===move.toString());
+    let possible = _move !== undefined;
+    //console.log(`${move.toString()} ${possible ? "valid move":"not valid move"}`);
+    //if(!possible){return;}
+    //move = _move;
+    
     let piece = this.#chessBoard[this.getIndex(move.col,move.row)];
-
-    const moves = GetPossibleMoves();
-    console.log(moves.toString());
-
-    for(const m of moves){
-      if(m.col===move.col && m.row===move.row && m.newCol==move.newCol && m.newRow===move.newRow){
-        if(piece==="P"){
-          let direction = 1;
-          //en Passant
-          if(this.getIndex(move.newCol, move.newRow) == this.enPassantIndex){
-            move.capture = this.#chessBoard[this.getIndex(move.newCol, move.newRow+direction)];
-            this.setPiece(move.newCol, move.newRow+direction, " ");
-            console.log(move.special);
-          }
-          if(Math.abs(move.row-move.newRow) == 2){
-            this.enPassantIndex = this.getIndex(move.newCol, move.newRow+direction);
-          } else {
-            this.enPassantIndex = -1;
-          }
-          if(move.special==="="){
-            console.log("Promotion Choice?"); // methond to pick promotion piece
-            move.special = move.special+"Q";
-            let p = move.special.substring(move.special.length-1);
-            piece = p;
-          }
-        }
-
-        this.setPiece(move.newCol, move.newRow, piece);
-        this.setPiece(move.col, move.row, " ");
-        if(piece=="K"){
-          this.whiteKingIndex = this.getIndex(move.newCol, move.newRow);
-        }
-        //Record move
-        this.printBoard();
-        placePieces();
+    if(piece==="P"){
+      let direction = 1;
+      //en Passant
+      if(this.getIndex(move.newCol, move.newRow) == this.enPassantIndex){
+        move.capture = this.#chessBoard[this.getIndex(move.newCol, move.newRow+direction)];
+        this.setPiece(move.newCol, move.newRow+direction, " ");
+        console.log(move.special);
+      }
+      if(Math.abs(move.row-move.newRow) == 2){
+        this.enPassantIndex = this.getIndex(move.newCol, move.newRow+direction);
+      } else {
+        this.enPassantIndex = -1;
+      }
+      // promotion
+      if(move.special==="="){
+        console.log("Promotion Choice?"); // methond to pick promotion piece
+        move.special = move.special+"Q";
+        let p = move.special.substring(move.special.length-1);
+        piece = p;
       }
     }
+
+    this.setPiece(move.newCol, move.newRow, piece);
+    this.setPiece(move.col, move.row, " ");
+    if(piece=="K"){
+      this.whiteKingIndex = this.getIndex(move.newCol, move.newRow);
+    }
+    //Record move
+    //this.printBoard();
+    //placePieces();
+    return move;
   }
 
   undoMove(move){
-    let piece = this.#chessBoard[this.getIndex(move.col,move.row)];
+    //console.log(`Undo move: ${move.toString()}`);
+    let piece = this.#chessBoard[this.getIndex(move.newCol,move.newRow)];
     if(piece==="P"){
       let direction = 1;
       if(move.special==".e.p."){
@@ -174,8 +227,7 @@ class GameModel {
       this.whiteKingIndex = this.getIndex(move.col, move.row);
     }
     //Record move
-    this.printBoard();
-    placePieces();
+    //this.printBoard();
   }
   //#endregion
 }
