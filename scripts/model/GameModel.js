@@ -1,6 +1,6 @@
 class GameModel {
   static #INSTANCE = new GameModel();
-  static #MG = new MoveGenerator();
+  #MG = new MoveGenerator();
   files=8; ranks=8;
   whiteKingIndex; blackKingIndex; enPassantSquare=-1;
   isWhiteTurn=true;
@@ -77,7 +77,6 @@ class GameModel {
   //#endregion
 
   //#region Piece Methods
-  //make pieces from board
   #makePieces(){
     this.#pieces=[]
     for(let i=0; i<this.#chessBoard.length; i++){
@@ -96,7 +95,21 @@ class GameModel {
 
   //#region Move Methods
   #getPossibleMoves(){
-    this.#possibleMoves = [1,2,3,4,5]
+    let list=[];
+    for(let i=0; i<this.#chessBoard.length; i++){
+      switch (this.#chessBoard[i].toLowerCase()) {
+        case 'p' : list.push(...this.#MG.possiblePawn(i)); break;
+        case 'n' : list.push(...this.#MG.possibleKnight(i)); break;
+        case 'r' : list.push(...this.#MG.possibleRook(i)); break;
+        case 'b' : list.push(...this.#MG.possibleBishop(i)); break;
+        case 'q' : list.push(...this.#MG.possibleQueen(i)); break;
+        case 'k' : list.push(...this.#MG.possibleKing(i)); break;
+      }
+    }
+    this.#possibleMoves = list;
+    console.group("Possible Moves:")
+    console.log(GM.GetPossibleMoves().toString());
+    console.groupEnd();
   }
 
   GetPossibleMoves(){
@@ -128,10 +141,44 @@ class GameModel {
   }
 
   MakeBoardMove(move){
+    let m = this.#possibleMoves.find(m => m.toString()===move.toString());
+    if(m === undefined) {return;}
+    move = m;
+    console.info("Making Move: " + move);
+
+    // Pawn Moves
+    if(move.piece.toLowerCase() == 'p'){
+      // en Passant
+      let direction = move.isWhite ? 1:-1;
+      if(this.getIndex(move.coords[2], move.coords[3]) == this.enPassantSquare){
+        move.capture = this.getChessBoard()[this.getIndex(move.coords[2], move.coords[3]+direction)];
+        this.setBoard(move.coords[2], move.coords[3]+direction, ' ');
+        let s1 = getCoordinate(move.coords[2],move.coords[3]+direction);
+        const target = Array.from(squares).find(s=>s.id===s1);
+        target.replaceChildren();
+      }
+      if(Math.abs(move.coords[1]-move.coords[3]) == 2){
+        this.enPassantSquare = this.getIndex(move.coords[2], move.coords[3]+direction);
+      } else {
+        this.enPassantSquare = -1;
+      }
+
+      // Promotion
+      if(move.special=="="){
+        console.log("Promotion Choice?"); // methond to pick promotion piece
+        move.special = move.special+"Q";
+        let promPiece = move.special.charAt(move.special.length-1);
+        if(move.isWhite){
+          promPiece=promPiece.toUpperCase();
+        } else {
+          promPiece=promPiece.toLowerCase();
+        }
+        move.piece = promPiece;
+      }
+    }
+
     this.makeMove(move);
     this.printBoard();
-
-    if(false){return;}
 
     const _squares = Array.from(squares);
     const _pieces = Array.from(pieces);
@@ -139,15 +186,36 @@ class GameModel {
     let s2 = getCoordinate(move.coords[2],move.coords[3]);
     const target = _squares.find(s=>s.id===s2);
     const piece = _pieces.find(p=>p.id.split(" ")[1]===s1);
+    if(move.special.charAt(0)==="="){
+      piece.children[0].src=`pieceImages/${move.isWhite?"white":"black"}-${getType(move.piece)}.png`;
+      piece.id = `${getType(move.piece)} ${s1}`
+    }
     target.replaceChildren(piece);
     piece.id =`${piece.id.split(" ")[0]} ${piece.parentElement.id}`;
+    console.log(piece);
     
     this.lastMove=move;
     this.isWhiteTurn=!this.isWhiteTurn;
     this.#getPossibleMoves();
+
   }
 
   UndoBoardMove(move){
+    console.info("Undo Move: " + move);
+
+    // Pawn Moves
+    let direction = move.isWhite ? 1:-1;
+    if(move.piece.toLowerCase() == 'p'){
+      if(move.special==="e.p."){
+        this.setBoard(move.coords[2], move.coords[3], ' ');
+        this.enPassantSquare = this.getIndex(move.coords[2], move.coords[1]-direction);
+        move.coords[3]+=direction;
+      }
+    }
+    //Promotion
+    if (move.special != "" && move.special.charAt(0) == '=') {
+      move.piece=move.isWhite ? 'P':'p';
+    }
     this.undoMove(move);
     this.printBoard();
 
@@ -156,11 +224,20 @@ class GameModel {
     let s1 = getCoordinate(move.coords[0],move.coords[1]);
     let s2 = getCoordinate(move.coords[2],move.coords[3]);
     const target = _squares.find(s=>s.id===s1);
-    const piece = _pieces.find(p=>p.id.split(" ")[1]===s2);
+    var piece = _pieces.find(p=>p.id.split(" ")[1]===s2);
     target.replaceChildren(piece);
+    if(piece===undefined){
+      s2 = getCoordinate(move.coords[2],move.coords[3]-direction);
+      piece = _pieces.find(p=>p.id.split(" ")[1]===s2);
+      let s = _squares.find(s=>s.id === s2);
+      target.replaceChildren(piece);
+    }
+    //Promotion
+    if (move.special != "" && move.special.charAt(0) == '=') {
+      piece.children[0].src=`pieceImages/${move.isWhite?"white":"black"}-${getType(move.piece)}.png`;
+      piece.id = `${getType(move.piece)} ${s1}`
+    }
     piece.id =`${piece.id.split(" ")[0]} ${piece.parentElement.id}`;
-
-    console.log(piece, target);
 
     if(move.capture !== " "){
       let piece = this.getPieces().find(piece => piece.col===move.coords[2] && piece.row===move.coords[3]);

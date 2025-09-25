@@ -101,7 +101,6 @@ a {
 .container{
   width: 90vw;
   height: 90vw;
-  border: 0.5rem solid var(--mcol1);
   position: relative;
 }
 
@@ -120,6 +119,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 0.01rem solid var(--mcol0);
 }
 .light {
   background-color: var(--mcol2);
@@ -129,6 +129,9 @@ a {
 }
 .hover{
   background-color: var(--mcol4);
+}
+.selected{
+  background-color: hsl(from var(--mcol4) h s calc(l + 20));
 }
 
 .coordinate{

@@ -1,18 +1,17 @@
 const GM=GameModel.getInstance();
+const CS=new CheckScanner();
 
 const board=document.getElementById("chessBoard");
 const squares=document.getElementsByClassName("square");
 const pieces=document.getElementsByClassName("piece");
-//const sprites = document.getElementsByTagName("img");
+const sprites = document.getElementsByTagName("img");
+
+var legalSquares=[];
 
 class Chess{
   constructor(){
     console.info("New Chess Game: ");
     this.init();
-
-    let move = new Move(4,7,3,1);
-    GM.MakeBoardMove(move);
-    console.log("Possible Moves: "+GM.GetPossibleMoves());
   }
 
   init(){
