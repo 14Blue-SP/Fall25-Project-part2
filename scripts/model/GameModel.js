@@ -60,7 +60,6 @@ class GameModel {
     }
     //getPossibleMoves();
     this.printBoard();
-    this.#makePieces();
   }
 
   printBoard(){
@@ -68,6 +67,7 @@ class GameModel {
     for(let i=0; i<this.#chessBoard.length; i+=this.files){
       board.push(this.#chessBoard.slice(i,i+this.files));
     }
+    this.#makePieces();
     console.table(board);
   }
   //#endregion

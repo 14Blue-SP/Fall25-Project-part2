@@ -1,8 +1,13 @@
-const board=document.getElementById("chessBoard");
 const GM=GameModel.getInstance();
 
+const board=document.getElementById("chessBoard");
 const squares=document.getElementsByClassName("square");
-var pieces=[];
+//const pieces=document.getElementsByClassName("piece");
+//const sprites = document.getElementsByTagName("img");
+
+//document.addEventListener('keyup', UndoMove);
+
+var latestMove=[];
 
 class Chess{
   constructor(){
@@ -13,8 +18,8 @@ class Chess{
   init(){
     GM.newStandardChessBoard();
     this.createBoard();
-    this.drawCorodinates();
-    placePieces();
+    //this.drawCorodinates();
+    this.createPieces();
   }
 
   createBoard(){
@@ -22,6 +27,8 @@ class Chess{
       for (let file=0; file<GM.files; file++) {
         let square = document.createElement("div");
         square.id = getCoordinate(file, rank);
+        square.addEventListener("dragover", endDrag);
+        square.addEventListener("drop", drop);
         square.className = "square";
         square.style.width = 100/GM.files+"%";
         square.style.height = 100/GM.ranks+"%";
@@ -49,6 +56,27 @@ class Chess{
     }
   }
 
+  createPieces(){
+    const _squares = Array.from(squares);
+    GM.getPieces().forEach(p => this.makePiece(p, _squares));
+  }
+
+  makePiece(p, _squares){
+    let piece = document.createElement("div");
+    piece.className="piece";
+    piece.addEventListener("dragstart", drag);
+    piece.setAttribute("draggable", true);
+    _squares.find(square => square.id === getCoordinate(p.col, p.row)).appendChild(piece);
+    piece.id =`${p.type} ${piece.parentElement.id}`;
+
+    // add sprites to element
+    let icon = document.createElement("img");
+    icon.src=p.img;
+    icon.alt=piece.id;
+    icon.setAttribute("draggable", false);
+    piece.appendChild(icon);
+  }
+
   static Piece(coords, piece){
     const Piece = {
       col: coords.file,
@@ -59,23 +87,4 @@ class Chess{
     };
     return Piece;
   }
-}
-
-// Display pieces
-function placePieces(){
-  pieces=[];
-  GM.getPieces().forEach(piece => {
-    let div = document.createElement("div");
-    div.id = `${piece.isWhite?"white":"black"} ${piece.type}`;
-    div.className="piece";
-    div.dataset.type = piece.type;
-    div.dataset.isWhite = piece.isWhite;
-    div.dataset.position = getCoordinate(piece.col, piece.row);
-    let icon = document.createElement("img");
-    icon.src=piece.img;
-    icon.alt=div.id;
-    div.appendChild(icon);
-    pieces.push(div);
-    Array.from(squares).find(space => (space.id===div.dataset.position)).appendChild(div);
-  });
 }

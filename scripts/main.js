@@ -19,3 +19,17 @@ function getType(str){
 function getCoordinate(col, row){
   return `${String.fromCharCode(97+col)}${GM.ranks-row}`;
 }
+
+function drag(ev){
+  const piece = ev.target;
+  console.log(piece);
+
+}
+
+function endDrag(ev){
+  ev.preventDefault();
+}
+
+function drop(ev){
+
+}
