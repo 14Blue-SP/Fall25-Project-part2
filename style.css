@@ -19,78 +19,107 @@ body{
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 90vh;
-  padding: 1rem;
+  justify-content: center;
+  height: 100vh;
   background-color: var(--darkCol);
 }
 
 h1{
-  padding: 0;
-  margin: 0;
+  padding: 5%;
   font-size: 10rem;
   color: var(--mcol2);
 }
+
 h2{
-  padding: 0;
-  margin: auto;
+  width: 80vw;
   font-size: 8rem;
+  text-align: center;
   color: var(--mcol2);
+  overflow: hidden;
 }
 
-.vbox-container{
-  width: 40rem;
-  margin-top: 20rem;
+ul {
+  list-style-type: none;
+}
+
+a {
+  padding: 5%;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.vbox{
   display: flex;
   flex-direction: column;
+  margin-top: 10%;
+  width: 35rem;
   gap: 5rem;
 }
-
-.item{
-  width: 100%;
-  height: 7rem;
-  padding: 1rem;
-  text-align: center;
-  font-weight: bold;
-  font-size: 3rem;
-  margin-bottom: 1rem;
+.vbox ul {
   border: 0.3rem solid var(--mcol3);
   border-radius: 1rem;
   background-color: var(--mcol2);
+  transition: background-color 0.3s ease-out;
+}
+.vbox a{
+  font-weight: bold;
+  font-size: 3rem;
   color: var(--mcol1);
-  transition: background-color 0.3s ease-out, color 0.3s ease-out;
+  transition: color 0.3s ease-out;
 }
-.item:hover{
+.vbox ul:hover{
   background-color: var(--mcol3);
-  color: var(--mcol2);
-  font-weight: 500;
 }
-.item:active{
+.vbox a:hover{
+  font-weight: 500;
+  color: var(--mcol2);
+}
+.vbox ul:active{
   border: 0.3rem solid var(--mcol2);
 }
 
-.container{
-  margin: 1rem;
-  position: relative;
+.navBar{
   width: 80vw;
-  height: 80vw;
-  border: 0.5rem solid var(--mcol1)
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+.navBar ul{
+  width: 25%;
+}
+.navBar a{
+  font-weight: bold;
+  font-size: 2rem;
+  color: var(--mcol2);
+}
+.navBar a:hover{
+  color: var(--mcol3);
+  font-weight: 500;
+}
+
+.container{
+  width: 90vw;
+  height: 90vw;
+  border: 0.5rem solid var(--mcol1);
 }
 
 #chessBoard{
+  position: relative;
   width: 100%;
-  height:100%;
+  height: 100%;
   left: 0;
-  right: 0;
+  top: 0;
   display: flex;
   flex-wrap: wrap;
   z-index: -1;
 }
-.square {
+
+.square{
   float: left;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
 }
 .light {
   background-color: var(--mcol2);
@@ -98,27 +127,15 @@ h2{
 .dark {
   background-color: var(--mcol3);
 }
-.square:hover{
-  background-color: var(--mcol4);
-}
 
 .coordinate{
   color: var(--mcol0);
   font-weight: bold;
-  font-size: 2rem;
-  z-index: 1;
+  font-size: 1.5rem;
+  z-index: 0;
 }
-.horizontal{
-  position: absolute;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  top: 97%;
-  left: 5%;
-  width: 100%;
-  
-}
-.vertical{
+
+#vertical{
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -127,18 +144,19 @@ h2{
   left: 0.5%;
   height: 100%;
 }
+#horizontal{
+  position: absolute;
+  display: flex;
+  justify-content: space-around;
+  top: 97%;
+  right: -5%;
+  width: 100%;
+}
 
 .piece{
   width: 100%;
-  z-index: 0;
-  cursor: pointer;
-  /*
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1;
   cursor: pointer;
-  */
 }
 .piece img{
   max-width: 100%;
@@ -146,9 +164,9 @@ h2{
   height: auto;
 }
 
-@media (min-width:500px){
-  .chessBoard{
-    width: 500px;
-    height: 500px;
+@media (min-width:950px){
+  .container{
+    width: 80vh;
+    height: 80vh;
   }
 }
