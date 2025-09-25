@@ -102,10 +102,10 @@ a {
   width: 90vw;
   height: 90vw;
   border: 0.5rem solid var(--mcol1);
+  position: relative;
 }
 
 #chessBoard{
-  position: relative;
   width: 100%;
   height: 100%;
   left: 0;
@@ -120,16 +120,15 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-}
-.square:hover{
-  background-color: #031D44;
 }
 .light {
   background-color: var(--mcol2);
 }
 .dark {
   background-color: var(--mcol3);
+}
+.hover{
+  background-color: var(--mcol4);
 }
 
 .coordinate{

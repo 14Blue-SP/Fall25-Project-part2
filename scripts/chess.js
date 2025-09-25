@@ -18,7 +18,7 @@ class Chess{
   init(){
     GM.newStandardChessBoard();
     this.createBoard();
-    //this.drawCorodinates();
+    this.drawCorodinates();
     this.createPieces();
   }
 
@@ -35,6 +35,9 @@ class Chess{
         if((file+rank)%2===0)square.classList.add("light");
         else square.classList.add("dark");
         board.appendChild(square);
+
+        square.addEventListener('mouseenter', function(){square.classList.add("hover")});
+        square.addEventListener('mouseleave', function(){square.classList.remove("hover")});
       }
     }
   }
@@ -68,6 +71,7 @@ class Chess{
     piece.setAttribute("draggable", true);
     _squares.find(square => square.id === getCoordinate(p.col, p.row)).appendChild(piece);
     piece.id =`${p.type} ${piece.parentElement.id}`;
+    piece.dataset.isWhite = Boolean(p.isWhite);
 
     // add sprites to element
     let icon = document.createElement("img");

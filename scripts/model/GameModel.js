@@ -2,6 +2,7 @@ class GameModel {
   static #INSTANCE = new GameModel();
   files=8; ranks=8;
   whiteKingIndex; blackKingIndex; enPassantSquare=-1;
+  isWhiteTurn=true;
 
   #chessBoard = new Array(this.files*this.ranks);
   #pieces = [];
