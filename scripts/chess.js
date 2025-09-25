@@ -2,24 +2,24 @@ const GM=GameModel.getInstance();
 
 const board=document.getElementById("chessBoard");
 const squares=document.getElementsByClassName("square");
-//const pieces=document.getElementsByClassName("piece");
+const pieces=document.getElementsByClassName("piece");
 //const sprites = document.getElementsByTagName("img");
-
-//document.addEventListener('keyup', UndoMove);
-
-var latestMove=[];
 
 class Chess{
   constructor(){
     console.info("New Chess Game: ");
     this.init();
+
+    let move = new Move(4,7,3,1);
+    GM.MakeBoardMove(move);
+    console.log("Possible Moves: "+GM.GetPossibleMoves());
   }
 
   init(){
     GM.newStandardChessBoard();
     this.createBoard();
     this.drawCorodinates();
-    this.createPieces();
+    createPieces();
   }
 
   createBoard(){
@@ -59,17 +59,12 @@ class Chess{
     }
   }
 
-  createPieces(){
-    const _squares = Array.from(squares);
-    GM.getPieces().forEach(p => this.makePiece(p, _squares));
-  }
-
-  makePiece(p, _squares){
+  static makePiece(p, _squares){
     let piece = document.createElement("div");
     piece.className="piece";
     piece.addEventListener("dragstart", drag);
     piece.setAttribute("draggable", true);
-    _squares.find(square => square.id === getCoordinate(p.col, p.row)).appendChild(piece);
+    _squares.find(square => square.id === getCoordinate(p.col, p.row)).replaceChildren(piece);
     piece.id =`${p.type} ${piece.parentElement.id}`;
     piece.dataset.isWhite = Boolean(p.isWhite);
 
@@ -91,4 +86,9 @@ class Chess{
     };
     return Piece;
   }
+}
+
+function createPieces(){
+  const _squares = Array.from(squares);
+  GM.getPieces().forEach(p => Chess.makePiece(p, _squares));
 }

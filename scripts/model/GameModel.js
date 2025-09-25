@@ -1,11 +1,14 @@
 class GameModel {
   static #INSTANCE = new GameModel();
+  static #MG = new MoveGenerator();
   files=8; ranks=8;
   whiteKingIndex; blackKingIndex; enPassantSquare=-1;
   isWhiteTurn=true;
+  latstMove=null;
 
   #chessBoard = new Array(this.files*this.ranks);
   #pieces = [];
+  #possibleMoves = [];
 
   static getInstance(){
     return this.#INSTANCE;
@@ -59,7 +62,7 @@ class GameModel {
         this.blackKingIndex = this.getIndex(4,0);
       }
     }
-    //getPossibleMoves();
+    this.#getPossibleMoves();
     this.printBoard();
   }
 
@@ -88,6 +91,84 @@ class GameModel {
 
   getPieces(){
     return this.#pieces;
+  }
+  //#endregion
+
+  //#region Move Methods
+  #getPossibleMoves(){
+    this.#possibleMoves = [1,2,3,4,5]
+  }
+
+  GetPossibleMoves(){
+    return this.#possibleMoves;
+  }
+
+  makeMove(move){
+    this.setBoard(move.coords[2], move.coords[3], move.piece);
+    this.setBoard(move.coords[0], move.coords[1], ' ');
+    if(move.piece.toLowerCase()==='k'){
+      if(move.isWhite){
+        this.whiteKingIndex = this.getIndex(move.coords[2], move.coords[3]);
+      } else {
+        this.blackKingIndex = this.getIndex(move.coords[2], move.coords[3]);
+      }
+    }
+  }
+
+  undoMove(move){
+    this.setBoard(move.coords[2], move.coords[3], move.capture);
+    this.setBoard(move.coords[0], move.coords[1], move.piece);
+    if(move.piece.toLowerCase()==='k'){
+      if(move.isWhite){
+        this.whiteKingIndex = this.getIndex(move.coords[0], move.coords[1]);
+      } else {
+        this.blackKingIndex = this.getIndex(move.coords[0], move.coords[1]);
+      }
+    }
+  }
+
+  MakeBoardMove(move){
+    this.makeMove(move);
+    this.printBoard();
+
+    if(false){return;}
+
+    const _squares = Array.from(squares);
+    const _pieces = Array.from(pieces);
+    let s1 = getCoordinate(move.coords[0],move.coords[1]);
+    let s2 = getCoordinate(move.coords[2],move.coords[3]);
+    const target = _squares.find(s=>s.id===s2);
+    const piece = _pieces.find(p=>p.id.split(" ")[1]===s1);
+    target.replaceChildren(piece);
+    piece.id =`${piece.id.split(" ")[0]} ${piece.parentElement.id}`;
+    
+    this.lastMove=move;
+    this.isWhiteTurn=!this.isWhiteTurn;
+    this.#getPossibleMoves();
+  }
+
+  UndoBoardMove(move){
+    this.undoMove(move);
+    this.printBoard();
+
+    const _squares = Array.from(squares);
+    const _pieces = Array.from(pieces);
+    let s1 = getCoordinate(move.coords[0],move.coords[1]);
+    let s2 = getCoordinate(move.coords[2],move.coords[3]);
+    const target = _squares.find(s=>s.id===s1);
+    const piece = _pieces.find(p=>p.id.split(" ")[1]===s2);
+    target.replaceChildren(piece);
+    piece.id =`${piece.id.split(" ")[0]} ${piece.parentElement.id}`;
+
+    console.log(piece, target);
+
+    if(move.capture !== " "){
+      let piece = this.getPieces().find(piece => piece.col===move.coords[2] && piece.row===move.coords[3]);
+        Chess.makePiece(piece, _squares);
+    }
+
+    this.isWhiteTurn=!this.isWhiteTurn;
+    this.#getPossibleMoves();
   }
   //#endregion
 }

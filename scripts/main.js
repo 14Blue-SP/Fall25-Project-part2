@@ -1,3 +1,4 @@
+document.addEventListener('keyup', UndoMove);
 game = new Chess();
 
 function isUpperCase(str) {
@@ -51,8 +52,17 @@ function drop(ev){
   target[0] = target[0].charCodeAt(0)-97;
   target[1] = parseInt(GM.ranks-target[1]);
 
-  _target.replaceChildren(piece);
-  piece.id =`${data.split(" ")[0]} ${piece.parentElement.id}`;
-  GM.isWhiteTurn=!GM.isWhiteTurn;
-  //latestMove=move;
+  let move = new Move(position[0],position[1],target[0],target[1]);
+  if(true){
+    GM.MakeBoardMove(move);
+  }
+}
+
+function UndoMove(ev){
+  if(ev.key === ' '){
+    if(GM.lastMove !== null){
+      GM.UndoBoardMove(GM.lastMove);
+      GM.lastMove = null;
+    }
+  }
 }
