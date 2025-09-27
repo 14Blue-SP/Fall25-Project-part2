@@ -2,9 +2,9 @@ class MoveGenerator{
   possibleKing(index){
     var list = [];
     let square = GM.getCoordinates(index);
-    for(let i=0; i<GM.getChessBoard().length; i++){
+    for(let i=0; i<GM.getBoard().length; i++){
       let newSquare = GM.getCoordinates(i);
-      const move = new KingMove(square.file,square.rank,newSquare.file,newSquare.rank);
+      let move = new KingMove(square.col,square.row,newSquare.col,newSquare.row);
       if(CS.isLegalMove(move) && CS.isSafeMove(move)){
         list.push(move);
       }
@@ -15,9 +15,9 @@ class MoveGenerator{
   possibleQueen(index){
     var list = [];
     let square = GM.getCoordinates(index);
-    for(let i=0; i<GM.getChessBoard().length; i++){
+    for(let i=0; i<GM.getBoard().length; i++){
       let newSquare = GM.getCoordinates(i);
-      const move = new QueenMove(square.file,square.rank,newSquare.file,newSquare.rank);
+      let move = new QueenMove(square.col,square.row,newSquare.col,newSquare.row);
       if(CS.isLegalMove(move) && CS.isSafeMove(move)){
         list.push(move);
       }
@@ -28,9 +28,9 @@ class MoveGenerator{
   possibleBishop(index){
     var list = [];
     let square = GM.getCoordinates(index);
-    for(let i=0; i<GM.getChessBoard().length; i++){
+    for(let i=0; i<GM.getBoard().length; i++){
       let newSquare = GM.getCoordinates(i);
-      const move = new BishopMove(square.file,square.rank,newSquare.file,newSquare.rank);
+      let move = new BishopMove(square.col,square.row,newSquare.col,newSquare.row);
       if(CS.isLegalMove(move) && CS.isSafeMove(move)){
         list.push(move);
       }
@@ -41,9 +41,9 @@ class MoveGenerator{
   possibleRook(index){
     var list = [];
     let square = GM.getCoordinates(index);
-    for(let i=0; i<GM.getChessBoard().length; i++){
+    for(let i=0; i<GM.getBoard().length; i++){
       let newSquare = GM.getCoordinates(i);
-      const move = new RookMove(square.file,square.rank,newSquare.file,newSquare.rank);
+      let move = new RookMove(square.col,square.row,newSquare.col,newSquare.row);
       if(CS.isLegalMove(move) && CS.isSafeMove(move)){
         list.push(move);
       }
@@ -54,9 +54,9 @@ class MoveGenerator{
   possibleKnight(index){
     var list = [];
     let square = GM.getCoordinates(index);
-    for(let i=0; i<GM.getChessBoard().length; i++){
+    for(let i=0; i<GM.getBoard().length; i++){
       let newSquare = GM.getCoordinates(i);
-      const move = new KnightMove(square.file,square.rank,newSquare.file,newSquare.rank);
+      let move = new KnightMove(square.col,square.row,newSquare.col,newSquare.row);
       if(CS.isLegalMove(move) && CS.isSafeMove(move)){
         list.push(move);
       }
@@ -67,9 +67,9 @@ class MoveGenerator{
   possiblePawn(index){
     var list = [];
     let square = GM.getCoordinates(index);
-    for(let i=0; i<GM.getChessBoard().length; i++){
+    for(let i=0; i<GM.getBoard().length; i++){
       let newSquare = GM.getCoordinates(i);
-      const move = new PawnMove(square.file,square.rank,newSquare.file,newSquare.rank);
+      let move = new PawnMove(square.col,square.row,newSquare.col,newSquare.row);
       if(CS.isLegalMove(move) && CS.isSafeMove(move)){
         list.push(move);
       }

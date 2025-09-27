@@ -1,8 +1,8 @@
 class Move {
   constructor(col, row, newCol, newRow){
     this.coords = [col, row, newCol, newRow];
-    this.piece = GM.getChessBoard()[GM.getIndex(col, row)];
-    this.capture = GM.getChessBoard()[GM.getIndex(newCol, newRow)];
+    this.piece = GM.getElement(col, row)
+    this.capture = GM.getElement(newCol, newRow);
     this.isWhite = isUpperCase(this.piece);
     this.special = "";
   }
@@ -14,8 +14,7 @@ class Move {
   }
   
   toString(){
-    let str = `${this.coords[0]}${this.coords[1]}${this.coords[2]}${this.coords[3]}${this.capture}`;
-    return str;
+    return `${this.coords[0]}${this.coords[1]}${this.coords[2]}${this.coords[3]}${this.capture}`;
   }
 }
 
@@ -25,6 +24,28 @@ class KingMove extends Move{
   }
 
   isValidMove(){
+    let castle = this.isWhite ? GM.castle.white:GM.castle.black;
+    let check = this.isWhite ? GM.checks.white:GM.checks.black;
+    // castling king side
+    if(this.coords[2]===this.coords[0]+2 && this.coords[3]==this.coords[1]
+      && GM.getElement(this.coords[0]+1, this.coords[1])===' '
+      && GM.getElement(this.coords[0]+2, this.coords[1])===' '
+      && !check && castle)
+    {
+      this.special="0-0"
+      return true;
+    }
+    // castling queen side
+    if(this.coords[2]===this.coords[0]-2 && this.coords[3]==this.coords[1]
+      && GM.getElement(this.coords[0]-1, this.coords[1])===' '
+      && GM.getElement(this.coords[0]-2, this.coords[1])===' '
+      && GM.getElement(this.coords[0]-3, this.coords[1])===' '
+      && !check && castle)
+    {
+      this.special="0-0-0"
+      return true;
+    }
+    
     return Math.abs(this.coords[0]-this.coords[2])<=1 && Math.abs(this.coords[1]-this.coords[3])<=1;
   }
 }
@@ -87,7 +108,7 @@ class PawnMove extends Move{
   }
 
   isValidMove(){
-    let direction = this.isWhite ? -1 : 1;
+    let direction = this.isWhite ? -1:1;
 
     //Promotion
     if(this.coords[3] == (this.isWhite?0:7)){
@@ -95,22 +116,22 @@ class PawnMove extends Move{
     }
 
     //Standard Move
-    if(this.coords[0]==this.coords[2] && this.coords[1]+direction == this.coords[3] && GM.getChessBoard()[GM.getIndex(this.coords[2], this.coords[3])]==' '){
+    if(this.coords[0]===this.coords[2] && this.coords[3]===this.coords[1]+direction && GM.getElement(this.coords[2], this.coords[3])===' '){
       return true;
     }
 
-     //First Double Move
-    if(this.coords[1]==(this.isWhite?6:1) && this.coords[0]==this.coords[2] && this.coords[1]+2*direction == this.coords[3] && GM.getChessBoard()[GM.getIndex(this.coords[2], this.coords[3])]==' ' && GM.getChessBoard()[GM.getIndex(this.coords[2], this.coords[1]+direction)]==' '){
+    //First Double Move
+    if(this.coords[1]===(this.isWhite?6:1) && this.coords[0]===this.coords[2] && this.coords[1]+2*direction===this.coords[3] && GM.getElement(this.coords[2], this.coords[3])===' ' && GM.getElement(this.coords[2], this.coords[1]+direction)===' ') {
       return true;
     }
 
     //Capture
-    if(Math.abs(this.coords[0]-this.coords[2])==1 && this.coords[1]+direction==this.coords[3] && GM.getChessBoard()[GM.getIndex(this.coords[2], this.coords[3])]!=' '){
+    if(Math.abs(this.coords[0]-this.coords[2])==1 && this.coords[1]+direction==this.coords[3] && GM.getElement(this.coords[2], this.coords[3])!==' '){
       return true;
     }
 
     //enPassant
-    if(GM.enPassantSquare==GM.getIndex(this.coords[2], this.coords[3]) && Math.abs(this.coords[0]-this.coords[2])==1 && this.coords[1]+direction==this.coords[3]){
+    if(GM.enPassantSquare==GM.getIndex(this.coords[2], this.coords[3]) && this.coords[1]!==(this.isWhite?6:1) && Math.abs(this.coords[0]-this.coords[2])==1 && this.coords[1]+direction==this.coords[3]){
       this.special = "e.p.";
       return true;
     }

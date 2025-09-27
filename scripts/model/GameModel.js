@@ -1,12 +1,15 @@
 class GameModel {
   static #INSTANCE = new GameModel();
   #MG = new MoveGenerator();
-  files=8; ranks=8;
-  whiteKingIndex; blackKingIndex; enPassantSquare=-1;
-  isWhiteTurn=true;
-  latstMove=null;
+  
+  files=8; ranks=8;  enPassantSquare=-1;
+  whiteKingIndex; blackKingIndex;
 
-  #chessBoard = new Array(this.files*this.ranks);
+  isWhiteTurn=true;
+  checks = {white:false, black:false}
+  castle = {white:true, black:true, cW:-1, cB:-1}
+
+  #board = new Array(this.files*this.ranks);
   #pieces = [];
   #possibleMoves = [];
 
@@ -14,28 +17,42 @@ class GameModel {
     return this.#INSTANCE;
   }
 
+  getState(){
+    GM.isWhiteTurn = !GM.isWhiteTurn
+    this.#getPossibleMoves()
+    let x = this.GetPossibleMoves().length;
+    GM.isWhiteTurn = !GM.isWhiteTurn
+    if (x===0){
+      console.warn("Checkmate");
+      console.info(`${GM.isWhiteTurn ? "White":"Black"} Wins!`);
+    }
+  }
+
   //#region Board Methods
   #clearBoard(){
-    this.#chessBoard.fill(' ');
+    this.#board.fill(' ');
   }
 
-  getChessBoard(){
-    return this.#chessBoard;
+  // setters and getters
+  getBoard(){
+    return this.#board;
   }
-
-  getIndex(file, rank){
-    return rank*this.ranks + file;
+  setBoard(col, row, piece){
+    this.#board[this.getIndex(col,row)] = piece;
   }
 
   getCoordinates(index){
-    return {file: (index%this.files), rank: parseInt(index/this.ranks)};
+    return {col: (index%this.files), row: parseInt(index/this.ranks)};
   }
 
-  setBoard(col, row, piece){
-    this.#chessBoard[this.getIndex(col,row)] = piece;
+  getElement(col, row){
+    return this.#board[this.getIndex(col, row)];
   }
 
-  //Make new ChessBoard
+  getIndex(col, row){
+    return row * this.ranks + col;
+  }
+
   newStandardChessBoard(){
     this.#clearBoard();
     for(let c=0; c<2; c++){
@@ -62,32 +79,37 @@ class GameModel {
         this.blackKingIndex = this.getIndex(4,0);
       }
     }
-    this.#getPossibleMoves();
     this.printBoard();
   }
 
   printBoard(){
     let board = [];
-    for(let i=0; i<this.#chessBoard.length; i+=this.files){
-      board.push(this.#chessBoard.slice(i,i+this.files));
+    for(let i=0; i<this.#board.length; i+=this.files){
+      board.push(this.#board.slice(i,i+this.files));
     }
     this.#makePieces();
     console.table(board);
+    this.#getPossibleMoves();
+    console.log("Possible Moves:", GM.GetPossibleMoves().toString());
+    CS.scanForCheck();
+    if(this.checks.white===true || this.checks.black===true) {
+      console.log("Checks", GM.checks);
+      this.getState();
+    }
   }
   //#endregion
 
   //#region Piece Methods
   #makePieces(){
     this.#pieces=[]
-    for(let i=0; i<this.#chessBoard.length; i++){
-      if(this.#chessBoard[i] !== ' '){
-        let piece = Chess.Piece(this.getCoordinates(i), this.#chessBoard[i]);
+    for(let i=0; i<this.#board.length; i++){
+      if(this.#board[i] !== ' '){
+        let piece = Chess.Piece(this.getCoordinates(i), this.#board[i]);
         piece.img=`pieceImages/${piece.isWhite?"white":"black"}-${piece.type}.png`;
         this.#pieces.push(piece);
       }
     }
   }
-
   getPieces(){
     return this.#pieces;
   }
@@ -96,8 +118,8 @@ class GameModel {
   //#region Move Methods
   #getPossibleMoves(){
     let list=[];
-    for(let i=0; i<this.#chessBoard.length; i++){
-      switch (this.#chessBoard[i].toLowerCase()) {
+    for(let i=0; i<this.#board.length; i++){
+      switch (this.#board[i].toLowerCase()) {
         case 'p' : list.push(...this.#MG.possiblePawn(i)); break;
         case 'n' : list.push(...this.#MG.possibleKnight(i)); break;
         case 'r' : list.push(...this.#MG.possibleRook(i)); break;
@@ -107,65 +129,31 @@ class GameModel {
       }
     }
     this.#possibleMoves = list;
-    console.group("Possible Moves:")
-    console.log(GM.GetPossibleMoves().toString());
-    console.groupEnd();
   }
 
   GetPossibleMoves(){
     return this.#possibleMoves;
   }
 
-  makeMove(move){
-    this.setBoard(move.coords[2], move.coords[3], move.piece);
-    this.setBoard(move.coords[0], move.coords[1], ' ');
-    if(move.piece.toLowerCase()==='k'){
-      if(move.isWhite){
-        this.whiteKingIndex = this.getIndex(move.coords[2], move.coords[3]);
-      } else {
-        this.blackKingIndex = this.getIndex(move.coords[2], move.coords[3]);
-      }
-    }
-  }
-
-  undoMove(move){
-    this.setBoard(move.coords[2], move.coords[3], move.capture);
-    this.setBoard(move.coords[0], move.coords[1], move.piece);
-    if(move.piece.toLowerCase()==='k'){
-      if(move.isWhite){
-        this.whiteKingIndex = this.getIndex(move.coords[0], move.coords[1]);
-      } else {
-        this.blackKingIndex = this.getIndex(move.coords[0], move.coords[1]);
-      }
-    }
-  }
-
-  MakeBoardMove(move){
-    let m = this.#possibleMoves.find(m => m.toString()===move.toString());
-    if(m === undefined) {return;}
-    move = m;
-    console.info("Making Move: " + move);
-
-    // Pawn Moves
-    if(move.piece.toLowerCase() == 'p'){
-      // en Passant
+  #makeMove(move){
+    // Pawn Move
+    if (move.piece.toLowerCase()==='p') {
       let direction = move.isWhite ? 1:-1;
-      if(this.getIndex(move.coords[2], move.coords[3]) == this.enPassantSquare){
-        move.capture = this.getChessBoard()[this.getIndex(move.coords[2], move.coords[3]+direction)];
+      if (this.getIndex(move.coords[2], move.coords[3])===this.enPassantSquare) {
+        move.capture = this.getElement(move.coords[2], move.coords[3]+direction);
         this.setBoard(move.coords[2], move.coords[3]+direction, ' ');
-        let s1 = getCoordinate(move.coords[2],move.coords[3]+direction);
-        const target = Array.from(squares).find(s=>s.id===s1);
-        target.replaceChildren();
       }
-      if(Math.abs(move.coords[1]-move.coords[3]) == 2){
+      if (Math.abs(move.coords[1]-move.coords[3])===2) {
         this.enPassantSquare = this.getIndex(move.coords[2], move.coords[3]+direction);
       } else {
         this.enPassantSquare = -1;
       }
 
       // Promotion
-      if(move.special=="="){
-        console.log("Promotion Choice?"); // methond to pick promotion piece
+      let promRank = move.isWhite ? 0:7;
+      if (move.coords[3] === promRank) {move.special="="}
+      if(move.special==="="){
+        console.warn("Promotion Choice?"); // methond to pick promotion piece
         move.special = move.special+"Q";
         let promPiece = move.special.charAt(move.special.length-1);
         if(move.isWhite){
@@ -176,75 +164,120 @@ class GameModel {
         move.piece = promPiece;
       }
     }
-
-    this.makeMove(move);
-    this.printBoard();
-
-    const _squares = Array.from(squares);
-    const _pieces = Array.from(pieces);
-    let s1 = getCoordinate(move.coords[0],move.coords[1]);
-    let s2 = getCoordinate(move.coords[2],move.coords[3]);
-    const target = _squares.find(s=>s.id===s2);
-    const piece = _pieces.find(p=>p.id.split(" ")[1]===s1);
-    if(move.special.charAt(0)==="="){
-      piece.children[0].src=`pieceImages/${move.isWhite?"white":"black"}-${getType(move.piece)}.png`;
-      piece.id = `${getType(move.piece)} ${s1}`
-    }
-    target.replaceChildren(piece);
-    piece.id =`${piece.id.split(" ")[0]} ${piece.parentElement.id}`;
-    console.log(piece);
-    
-    this.lastMove=move;
-    this.isWhiteTurn=!this.isWhiteTurn;
-    this.#getPossibleMoves();
-
-  }
-
-  UndoBoardMove(move){
-    console.info("Undo Move: " + move);
-
-    // Pawn Moves
-    let direction = move.isWhite ? 1:-1;
-    if(move.piece.toLowerCase() == 'p'){
-      if(move.special==="e.p."){
-        this.setBoard(move.coords[2], move.coords[3], ' ');
-        this.enPassantSquare = this.getIndex(move.coords[2], move.coords[1]-direction);
-        move.coords[3]+=direction;
+    //console.log("Castle", this.castle)
+    this.setBoard(move.coords[2], move.coords[3], move.piece);
+    this.setBoard(move.coords[0], move.coords[1], ' ');
+    if(move.piece.toLowerCase()==='k'){
+      //console.log(move)
+      if(move.isWhite){
+        this.whiteKingIndex = this.getIndex(move.coords[2], move.coords[3]);
+      } else {
+        this.blackKingIndex = this.getIndex(move.coords[2], move.coords[3]);
+      }
+      //castle
+      if(move.special==="0-0"){
+        this.setBoard(move.coords[2]-1, move.coords[3], move.isWhite ? 'R':'r');
+        this.setBoard(7, move.coords[1], ' ');
+      }
+      if(move.special==="0-0-0"){
+        this.setBoard(move.coords[2]+1, move.coords[3], move.isWhite ? 'R':'r');
+        this.setBoard(0, move.coords[1], ' ');
       }
     }
-    //Promotion
-    if (move.special != "" && move.special.charAt(0) == '=') {
-      move.piece=move.isWhite ? 'P':'p';
+  }
+  #undoMove(move){
+    this.setBoard(move.coords[2], move.coords[3], move.capture);
+    this.setBoard(move.coords[0], move.coords[1], move.piece);
+    let prevMove = Chess.moves[Chess.moves.length-1];
+    if(prevMove !== undefined) {
+      if (move.piece.toLowerCase()==='p') {
+        let direction = prevMove.isWhite ? 1:-1;
+        if(move.special==="e.p."){
+          this.setBoard(move.coords[2], move.coords[3], ' ');
+          this.setBoard(move.coords[2], move.coords[3]-direction, move.capture);
+        }
+        if (Math.abs(prevMove.coords[1]-prevMove.coords[3])===2) {
+          this.enPassantSquare = this.getIndex(prevMove.coords[2], prevMove.coords[3]+direction);
+        } else {
+          this.enPassantSquare = -1;
+        }
+      }
     }
-    this.undoMove(move);
+    // castling
+    if (move.piece.toLowerCase()==='r' || move.piece.toLowerCase()==='k') {
+      //console.log("PrevMove",prevMove)
+      if(move.isWhite && this.castle.cW===0){
+        this.castle.white=true;
+        this.castle.cW--;
+      }
+      if(!move.isWhite && this.castle.cB===0) {
+        this.castle.black=true;
+        this.castle.cB--;
+      }
+    }
+    if(move.special==="0-0"){
+      this.setBoard(move.coords[2]-1, move.coords[3], ' ');
+      this.setBoard(7, move.coords[3], move.isWhite ? 'R':'r');
+      if(move.isWhite){
+        this.castle.white=true;
+        this.castle.cW=-1;
+      } else {
+        this.castle.black=true;
+        this.castle.cB=-1;
+      }
+    }
+    if(move.special==="0-0-0"){
+      this.setBoard(move.coords[2]+1, move.coords[3], ' ');
+      this.setBoard(0, move.coords[3], move.isWhite ? 'R':'r');
+      if(move.isWhite){
+        this.castle.white=true;
+        this.castle.cW=-1;
+      } else {
+        this.castle.black=true;
+        this.castle.cB=-1;
+      }
+    }
+    //console.log("Castle", this.castle)
+    if(move.special.charAt(0)==="="){
+      this.setBoard(move.coords[0], move.coords[1], move.isWhite ? 'P':'p');
+    }
+    if(move.piece.toLowerCase()==='k'){
+      if(move.isWhite){
+        this.whiteKingIndex = this.getIndex(move.coords[0], move.coords[1]);
+      } else {
+        this.blackKingIndex = this.getIndex(move.coords[0], move.coords[1]);
+      }
+    }
+  }
+
+  MakeBoardMove(move){
+    let m = this.GetPossibleMoves().find(m => m.toString()===move.toString());
+    if(m === undefined) {return;}
+    move = m;
+    console.info("Making Move", move.toString());
+    this.#makeMove(move);
+    // castling
+    if (move.piece.toLowerCase()==='r' || move.piece.toLowerCase()==='k') {
+      if(move.isWhite){
+        this.castle.white=false;
+        this.castle.cW++;
+      } else {
+        this.castle.black=false;
+        this.castle.cB++;
+      }
+    }
     this.printBoard();
-
-    const _squares = Array.from(squares);
-    const _pieces = Array.from(pieces);
-    let s1 = getCoordinate(move.coords[0],move.coords[1]);
-    let s2 = getCoordinate(move.coords[2],move.coords[3]);
-    const target = _squares.find(s=>s.id===s1);
-    var piece = _pieces.find(p=>p.id.split(" ")[1]===s2);
-    target.replaceChildren(piece);
-    if(piece===undefined){
-      s2 = getCoordinate(move.coords[2],move.coords[3]-direction);
-      piece = _pieces.find(p=>p.id.split(" ")[1]===s2);
-      let s = _squares.find(s=>s.id === s2);
-      target.replaceChildren(piece);
-    }
-    //Promotion
-    if (move.special != "" && move.special.charAt(0) == '=') {
-      piece.children[0].src=`pieceImages/${move.isWhite?"white":"black"}-${getType(move.piece)}.png`;
-      piece.id = `${getType(move.piece)} ${s1}`
-    }
-    piece.id =`${piece.id.split(" ")[0]} ${piece.parentElement.id}`;
-
-    if(move.capture !== " "){
-      let piece = this.getPieces().find(piece => piece.col===move.coords[2] && piece.row===move.coords[3]);
-        Chess.makePiece(piece, _squares);
-    }
-
-    this.isWhiteTurn=!this.isWhiteTurn;
+    Chess.movePiece(move, false);
+    Chess.moves.push(move);
+    this.isWhiteTurn = !this.isWhiteTurn;
+    this.#getPossibleMoves();
+  }
+  UndoBoardMove(move){
+    console.info("Undo Move", move.toString());
+    this.#undoMove(move);
+    this.printBoard();
+    Chess.movePiece(move, true);
+    this.isWhiteTurn = !this.isWhiteTurn;
     this.#getPossibleMoves();
   }
   //#endregion
