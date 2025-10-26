@@ -1,138 +1,110 @@
-class CheckScanner{
-  Alliance(p1, p2){
-    if(p1===' ' || p2===' '){
+class CheckScanner {
+  Alliance(s1, s2) {
+    if (s1===undefined || s2===undefined) {
       return false;
     }
-    return isUpperCase(p1)===isUpperCase(p2);
+    if (s1.isEmpty() || s2.isEmpty()) {
+      return false;
+    }
+    return s1.piece.isWhite == s2.piece.isWhite;
   }
-  
-  isLegalMove(move){
-    if(move.isWhite !== GM.isWhiteTurn){
-      return false;
-    }
-    if(this.Alliance(move.piece, move.capture)){
-      return false;
-    }
-    if(!move.isValidMove()){
-      return false;
-    }
-    if(move.pieceCollision()){
-      return false;
-    }
+
+  isLegalMove(move) {
+    if (this.Alliance(move.initial, move.target)) { return false;}
+    if (!move.initial.piece.isValidMove(move)) { return false;}
+    if (move.initial.piece.pieceCollision(move)) { return false;}
     return true;
   }
 
-  isSafeMove(move){
-    var piece = GM.getElement(move.coords[0], move.coords[1]);
-    var capture = GM.getElement(move.coords[2], move.coords[3]);
-    GM.setBoard(move.coords[0], move.coords[1], ' ');
-    GM.setBoard(move.coords[2], move.coords[3], piece);
-    let tempPosition = GM.getIndex(move.coords[0], move.coords[1]);
-    if(piece.toLowerCase()==='k'){
-      if(move.isWhite){
-        GM.whiteKingIndex = GM.getIndex(move.coords[2], move.coords[3]);
+  isSafeMove(move) {
+    let king;
+    let board = GM.boardModel;
+    board.setElement(new Square(move.initial.col, move.initial.row));
+    board.setElement(new Square(move.target.col, move.target.row, move.initial.piece));
+    if (move.isWhite) {
+      king = board.whiteKing;
+    } else {
+      king = board.blackKing;
+    }
+    if (move.initial.piece instanceof King) {
+      if (move.isWhite) {
+        board.whiteKing = board.getElement(move.target.col, move.target.row);
       } else {
-        GM.blackKingIndex = GM.getIndex(move.coords[2], move.coords[3]);
+        board.blackKing = board.getElement(move.target.col, move.target.row);
       }
     }
-    const isSafe = !this.isCheck(move.isWhite);
-    GM.setBoard(move.coords[0], move.coords[1], piece);
-    GM.setBoard(move.coords[2], move.coords[3], capture);
-    if(piece.toLowerCase()==='k'){
-      if(move.isWhite){
-        GM.whiteKingIndex = tempPosition;
+    let isSafe = !this.isCheck(move.isWhite);
+    board.setElement(move.initial);
+    board.setElement(move.target);
+    if (move.initial.piece instanceof King) {
+      if (move.isWhite) {
+        board.whiteKing = king;
       } else {
-        GM.blackKingIndex = tempPosition;
+        board.blackKing = king;
       }
     }
-    return isSafe;
+    return isSafe
   }
 
-  isCheck(isWhite){
-    var king;
-    if(isWhite){
-      king = GM.getCoordinates(GM.whiteKingIndex);
-    } else {
-      king = GM.getCoordinates(GM.blackKingIndex);
-    }
-
-    // check Diagonals
-    for(let i=0; i<GM.getBoard().length; i++){
-      let square = GM.getCoordinates(i);
-      let move = new BishopMove(king.col,king.row,square.col,square.row);
-      if(this.isLegalMove(move)){
-        let capture = GM.getElement(move.coords[2], move.coords[3]).toLowerCase();
-        if(capture==='b' || capture==='q'){
-          return true;
+  isCheck(isWhite) {
+    let board = GM.boardModel;
+    let king = isWhite ? board.whiteKing:board.blackKing;
+    
+    // Check Diagonals
+    for (let i=0; i<board.getBoard().length; i++) {
+      let square = board.getBoard()[i];
+      if (!square.isEmpty()) {
+        if (square.piece instanceof Bishop || square.piece instanceof Queen) {
+          let move = new Move(square, king);
+          if (this.isLegalMove(move)) { return true; }
         }
       }
     }
 
-     // Vertical and Horizontal
-    for(let i=0; i<GM.getBoard().length; i++){
-      let square = GM.getCoordinates(i);
-      let move = new RookMove(king.col,king.row,square.col,square.row);
-      if(this.isLegalMove(move)){
-        let capture = GM.getElement(move.coords[2], move.coords[3]).toLowerCase();
-        if(capture==='r' || capture==='q'){
-          return true;
+    // Check Horizontals and Verticals
+    for (let i=0; i<board.getBoard().length; i++) {
+      let square = board.getBoard()[i];
+      if (!square.isEmpty()) {
+        if (square.piece instanceof Rook || square.piece instanceof Queen) {
+          let move = new Move(square, king);
+          if (this.isLegalMove(move)) { return true; }
         }
       }
     }
 
-    // check Knight
-    for(let i=0; i<GM.getBoard().length; i++){
-      let square = GM.getCoordinates(i);
-      let move = new KnightMove(king.col,king.row,square.col,square.row);
-      if(this.isLegalMove(move)){
-        let capture = GM.getElement(move.coords[2], move.coords[3]).toLowerCase();
-        if(capture==='n'){
-          return true;
+    // Check Knight
+    for (let i=0; i<board.getBoard().length; i++) {
+      let square = board.getBoard()[i];
+      if (!square.isEmpty()) {
+        if (square.piece instanceof Knight) {
+          let move = new Move(square, king);
+          if (this.isLegalMove(move)) { return true; }
         }
       }
     }
 
-    // check Pawn
-    for(let i=0; i<GM.getBoard().length; i++){
-      let square = GM.getCoordinates(i);
-      let move = new PawnMove(king.col,king.row,square.col,square.row);
-      if(this.isLegalMove(move)){
-        let capture = GM.getElement(move.coords[2], move.coords[3]).toLowerCase();
-        if(capture==='p'){
-          return true;
+    // Check Pawn
+    for (let i=0; i<board.getBoard().length; i++) {
+      let square = board.getBoard()[i];
+      if (!square.isEmpty()) {
+        if (square.piece instanceof Pawn) {
+          let move = new Move(square, king);
+          if (this.isLegalMove(move)) { return true; }
         }
       }
     }
 
-    // check King
-    for(let i=0; i<GM.getBoard().length; i++){
-      let square = GM.getCoordinates(i);
-      let move = new KingMove(king.col,king.row,square.col,square.row);
-      if(this.isLegalMove(move)){
-        let capture = GM.getElement(move.coords[2], move.coords[3]).toLowerCase();
-        if(capture==='k'){
-          return true;
+    // Check King
+    for (let i=0; i<board.getBoard().length; i++) {
+      let square = board.getBoard()[i];
+      if (!square.isEmpty()) {
+        if (square.piece instanceof King) {
+          if (king.equals(square)) {continue;}
+          let move = new Move(square, king);
+          if (this.isLegalMove(move)) { return true; }
         }
       }
     }
     return false;
-  }
-
-  scanForCheck(){
-    GM.checks.white=false;
-    GM.checks.black=false;
-
-    // Check if White King is in Check
-    GM.GetPossibleMoves().forEach(move => {
-      if(move.capture==='K'){
-        GM.checks.white=true; return;
-      }
-    });
-    // Check if White King is in Check
-    GM.GetPossibleMoves().forEach(move => {
-      if(move.capture==='k'){
-        GM.checks.black=true; return;
-      }
-    });
   }
 }

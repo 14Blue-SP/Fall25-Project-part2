@@ -1,284 +1,182 @@
+var MAX_DEPTH = 4;
+
 class GameModel {
   static #INSTANCE = new GameModel();
-  #MG = new MoveGenerator();
-  
-  files=8; ranks=8;  enPassantSquare=-1;
-  whiteKingIndex; blackKingIndex;
+  #moves = [];
 
-  isWhiteTurn=true;
-  checks = {white:false, black:false}
-  castle = {white:true, black:true, cW:-1, cB:-1}
-
-  #board = new Array(this.files*this.ranks);
-  #pieces = [];
-  #possibleMoves = [];
+  boardModel = new BoardModel();
+  playerIsWhite=true; isPlaying=true;
+  computerGame=false;
+  isWhiteTurn = true;
+  checks = [false, false];
 
   static getInstance(){
     return this.#INSTANCE;
   }
+  
+  notifyListener(){
+    Chess.onGameChaged();
+  }
 
-  getState(){
-    GM.isWhiteTurn = !GM.isWhiteTurn
-    this.#getPossibleMoves()
-    let x = this.GetPossibleMoves().length;
-    GM.isWhiteTurn = !GM.isWhiteTurn
-    if (x===0){
-      console.warn("Checkmate");
-      console.info(`${GM.isWhiteTurn ? "White":"Black"} Wins!`);
+  newGame() {
+    this.boardModel.newStandardChessBoard();
+    this.isWhiteTurn = true;
+    this.#moves = [];
+    this.checks = [false, false];
+  }
+
+  makeMove(move) {
+    this.boardModel.makeMove(move);
+    this.#moves.unshift(move);
+    this.getState();
+    MovePiece(move.initial, move.target);
+
+    // Pawn Promotion
+    if (move.special.startsWith("=")) {
+      const temp = move.target.piece;
+      move.target.piece =  move.initial.piece
+      BoardView.makePiece(move.target);
+      move.target.piece = temp;
     }
-  }
 
-  //#region Board Methods
-  #clearBoard(){
-    this.#board.fill(' ');
-  }
-
-  // setters and getters
-  getBoard(){
-    return this.#board;
-  }
-  setBoard(col, row, piece){
-    this.#board[this.getIndex(col,row)] = piece;
-  }
-
-  getCoordinates(index){
-    return {col: (index%this.files), row: parseInt(index/this.ranks)};
-  }
-
-  getElement(col, row){
-    return this.#board[this.getIndex(col, row)];
-  }
-
-  getIndex(col, row){
-    return row * this.ranks + col;
-  }
-
-  newStandardChessBoard(){
-    this.#clearBoard();
-    for(let c=0; c<2; c++){
-      // Place pawns
-      for(let i=0; i<this.files; i++){
-        this.setBoard(i, c%2==0 ? 6:1, c%2==0 ? 'P':'p');
-      }
-      // Place rooks
-      this.setBoard(0, c%2==0 ? 7:0, c%2==0 ? 'R':'r');
-      this.setBoard(7, c%2==0 ? 7:0, c%2==0 ? 'R':'r');
-      // Place knights
-      this.setBoard(1, c%2==0 ? 7:0, c%2==0 ? 'N':'n');
-      this.setBoard(6, c%2==0 ? 7:0, c%2==0 ? 'N':'n');
-      // Place bishops
-      this.setBoard(2, c%2==0 ? 7:0, c%2==0 ? 'B':'b');
-      this.setBoard(5, c%2==0 ? 7:0, c%2==0 ? 'B':'b');
-      // Place queens
-      this.setBoard(3, c%2==0 ? 7:0, c%2==0 ? 'Q':'q');
-      // Place kings
-      this.setBoard(4, c%2==0 ? 7:0, c%2==0 ? 'K':'k');
-      if(c%2==0){
-        this.whiteKingIndex = this.getIndex(4,7);
-      } else {
-        this.blackKingIndex = this.getIndex(4,0);
-      }
+    // enPassant
+    if (move.special==="e.p.") {
+      let direction = move.initial.piece.dir;
+      BoardView.clearPiece(this.boardModel.getElement(move.target.col, move.target.row-direction));
     }
-    this.printBoard();
-  }
 
-  printBoard(){
-    let board = [];
-    for(let i=0; i<this.#board.length; i+=this.files){
-      board.push(this.#board.slice(i,i+this.files));
-    }
-    this.#makePieces();
-    console.table(board);
-    this.#getPossibleMoves();
-    console.log("Possible Moves:", GM.GetPossibleMoves().toString());
-    CS.scanForCheck();
-    if(this.checks.white===true || this.checks.black===true) {
-      console.log("Checks", GM.checks);
-      this.getState();
-    }
-  }
-  //#endregion
-
-  //#region Piece Methods
-  #makePieces(){
-    this.#pieces=[]
-    for(let i=0; i<this.#board.length; i++){
-      if(this.#board[i] !== ' '){
-        let piece = Chess.Piece(this.getCoordinates(i), this.#board[i]);
-        piece.img=`pieceImages/${piece.isWhite?"white":"black"}-${piece.type}.png`;
-        this.#pieces.push(piece);
-      }
-    }
-  }
-  getPieces(){
-    return this.#pieces;
-  }
-  //#endregion
-
-  //#region Move Methods
-  #getPossibleMoves(){
-    let list=[];
-    for(let i=0; i<this.#board.length; i++){
-      switch (this.#board[i].toLowerCase()) {
-        case 'p' : list.push(...this.#MG.possiblePawn(i)); break;
-        case 'n' : list.push(...this.#MG.possibleKnight(i)); break;
-        case 'r' : list.push(...this.#MG.possibleRook(i)); break;
-        case 'b' : list.push(...this.#MG.possibleBishop(i)); break;
-        case 'q' : list.push(...this.#MG.possibleQueen(i)); break;
-        case 'k' : list.push(...this.#MG.possibleKing(i)); break;
-      }
-    }
-    this.#possibleMoves = list;
-  }
-
-  GetPossibleMoves(){
-    return this.#possibleMoves;
-  }
-
-  #makeMove(move){
-    // Pawn Move
-    if (move.piece.toLowerCase()==='p') {
-      let direction = move.isWhite ? 1:-1;
-      if (this.getIndex(move.coords[2], move.coords[3])===this.enPassantSquare) {
-        move.capture = this.getElement(move.coords[2], move.coords[3]+direction);
-        this.setBoard(move.coords[2], move.coords[3]+direction, ' ');
-      }
-      if (Math.abs(move.coords[1]-move.coords[3])===2) {
-        this.enPassantSquare = this.getIndex(move.coords[2], move.coords[3]+direction);
-      } else {
-        this.enPassantSquare = -1;
-      }
-
-      // Promotion
-      let promRank = move.isWhite ? 0:7;
-      if (move.coords[3] === promRank) {move.special="="}
-      if(move.special==="="){
-        console.warn("Promotion Choice?"); // methond to pick promotion piece
-        move.special = move.special+"Q";
-        let promPiece = move.special.charAt(move.special.length-1);
-        if(move.isWhite){
-          promPiece=promPiece.toUpperCase();
-        } else {
-          promPiece=promPiece.toLowerCase();
-        }
-        move.piece = promPiece;
-      }
-    }
-    //console.log("Castle", this.castle)
-    this.setBoard(move.coords[2], move.coords[3], move.piece);
-    this.setBoard(move.coords[0], move.coords[1], ' ');
-    if(move.piece.toLowerCase()==='k'){
-      //console.log(move)
-      if(move.isWhite){
-        this.whiteKingIndex = this.getIndex(move.coords[2], move.coords[3]);
-      } else {
-        this.blackKingIndex = this.getIndex(move.coords[2], move.coords[3]);
-      }
-      //castle
-      if(move.special==="0-0"){
-        this.setBoard(move.coords[2]-1, move.coords[3], move.isWhite ? 'R':'r');
-        this.setBoard(7, move.coords[1], ' ');
-      }
-      if(move.special==="0-0-0"){
-        this.setBoard(move.coords[2]+1, move.coords[3], move.isWhite ? 'R':'r');
-        this.setBoard(0, move.coords[1], ' ');
-      }
-    }
-  }
-  #undoMove(move){
-    this.setBoard(move.coords[2], move.coords[3], move.capture);
-    this.setBoard(move.coords[0], move.coords[1], move.piece);
-    let prevMove = Chess.moves[Chess.moves.length-1];
-    if(prevMove !== undefined) {
-      if (move.piece.toLowerCase()==='p') {
-        let direction = prevMove.isWhite ? 1:-1;
-        if(move.special==="e.p."){
-          this.setBoard(move.coords[2], move.coords[3], ' ');
-          this.setBoard(move.coords[2], move.coords[3]-direction, move.capture);
-        }
-        if (Math.abs(prevMove.coords[1]-prevMove.coords[3])===2) {
-          this.enPassantSquare = this.getIndex(prevMove.coords[2], prevMove.coords[3]+direction);
-        } else {
-          this.enPassantSquare = -1;
-        }
-      }
-    }
-    // castling
-    if (move.piece.toLowerCase()==='r' || move.piece.toLowerCase()==='k') {
-      //console.log("PrevMove",prevMove)
-      if(move.isWhite && this.castle.cW===0){
-        this.castle.white=true;
-        this.castle.cW--;
-      }
-      if(!move.isWhite && this.castle.cB===0) {
-        this.castle.black=true;
-        this.castle.cB--;
-      }
-    }
-    if(move.special==="0-0"){
-      this.setBoard(move.coords[2]-1, move.coords[3], ' ');
-      this.setBoard(7, move.coords[3], move.isWhite ? 'R':'r');
-      if(move.isWhite){
-        this.castle.white=true;
-        this.castle.cW=-1;
-      } else {
-        this.castle.black=true;
-        this.castle.cB=-1;
-      }
+    // Castling
+    if(move.special==="0-0") {
+      let rook = this.boardModel.getElement(GM.playerIsWhite ? 7:0, move.initial.row);
+      let square = this.boardModel.getElement(move.target.col-(GM.playerIsWhite ? 1:-1), move.target.row);
+      BoardView.makePiece(square)
+      BoardView.clearPiece(rook)
     }
     if(move.special==="0-0-0"){
-      this.setBoard(move.coords[2]+1, move.coords[3], ' ');
-      this.setBoard(0, move.coords[3], move.isWhite ? 'R':'r');
-      if(move.isWhite){
-        this.castle.white=true;
-        this.castle.cW=-1;
-      } else {
-        this.castle.black=true;
-        this.castle.cB=-1;
-      }
-    }
-    //console.log("Castle", this.castle)
-    if(move.special.charAt(0)==="="){
-      this.setBoard(move.coords[0], move.coords[1], move.isWhite ? 'P':'p');
-    }
-    if(move.piece.toLowerCase()==='k'){
-      if(move.isWhite){
-        this.whiteKingIndex = this.getIndex(move.coords[0], move.coords[1]);
-      } else {
-        this.blackKingIndex = this.getIndex(move.coords[0], move.coords[1]);
-      }
+      let rook = this.boardModel.getElement(GM.playerIsWhite ? 0:7, move.initial.row);
+      let square = this.boardModel.getElement(move.target.col+(GM.playerIsWhite ? 1:-1), move.target.row);
+      BoardView.makePiece(square)
+      BoardView.clearPiece(rook)
     }
   }
 
-  MakeBoardMove(move){
-    let m = this.GetPossibleMoves().find(m => m.toString()===move.toString());
-    if(m === undefined) {return;}
-    move = m;
-    console.info("Making Move", move.toString());
-    this.#makeMove(move);
-    // castling
-    if (move.piece.toLowerCase()==='r' || move.piece.toLowerCase()==='k') {
-      if(move.isWhite){
-        this.castle.white=false;
-        this.castle.cW++;
+  undoMove() {
+    if (this.#moves.length!==0) {
+      let lastMove = this.#moves.shift();
+      this.boardModel.undoMove(lastMove);
+      this.getState();
+
+      // undo promotion
+      if (lastMove.special.startsWith("=")) {
+        BoardView.makePiece(lastMove.initial);
+      }
+
+      // undo enPassant
+      if(lastMove.special==="e.p.")  {
+        let direction = lastMove.initial.piece.dir;
+        BoardView.makePiece(this.boardModel.getElement(lastMove.target.col, lastMove.target.row-direction));
+      }
+
+      // Undo Castling
+    if(lastMove.special==="0-0"){
+      let square = this.boardModel.getElement(GM.playerIsWhite ? 7:0, lastMove.initial.row);
+      let rook = this.boardModel.getElement(lastMove.target.col-(GM.playerIsWhite ? 1:-1), lastMove.target.row);
+      BoardView.makePiece(square)
+      BoardView.clearPiece(rook)
+    } else if(lastMove.special==="0-0-0"){
+      let square = this.boardModel.getElement(GM.playerIsWhite ? 0:7, lastMove.initial.row);
+      let rook = this.boardModel.getElement(lastMove.target.col+(GM.playerIsWhite ? 1:-1), lastMove.target.row);
+      BoardView.makePiece(square)
+      BoardView.clearPiece(rook)
+    }
+
+      console.log(`Undo Move:`);
+      this.boardModel.printBoard();
+      return lastMove;
+    } 
+  }
+
+  getMoves() {
+    return this.#moves;
+  }
+
+  nextTurn() {
+    this.isWhiteTurn = !this.isWhiteTurn;
+  }
+
+  promotionSelection(move) {
+    let promPiece = parseInt(prompt("Select Promotion:\n0:Queen, 1:Rook, 2:Bishop, 3:Knight", "0"));
+    switch (promPiece) {
+      case 0: move.special = "=Q"; break;
+      case 1: move.special = "=R"; break;
+      case 2: move.special = "=B"; break;
+      case 3: move.special = "=N"; break;
+      default: move.special = "=Q"; break;
+    }
+  }
+
+  getState() {
+    let state = this.boardModel.getState();
+    if (state != 0) {
+      this.isPlaying = false;
+      let message;
+      switch (state) {
+        case 1: message = "White Has Won the Game."; break;
+        case 2: message = "Black Has Won the Game."; break;
+        case 3: message = "The Game Has ended in a Draw."; break;
+        default: message = "This is an informational message."; break;
+      }
+      alert(message);
+    }
+  }
+
+  //#region Move Methods
+  computerMove(){
+    if (this.isPlaying && (this.isWhiteTurn===!this.playerIsWhite)) {
+      let s = this.boardModel.getElement(0,0);
+      this.makeMove((this.MinMax(MAX_DEPTH, 100000, -100000, new Move(s,s), this.isWhiteTurn)));
+      this.nextTurn();
+      this.boardModel.printBoard();
+    }
+  }
+
+  sortMoves(list) {
+    for (let move of list) {
+      this.boardModel.makeMove(move);
+      move.score = Scorer.score(-1, 0)*(list[0].isWhite ? 1:-1);
+      this.boardModel.undoMove(move);
+    }
+    list.sort((a,b) => a.score - b.score);
+    return list;
+  }
+
+  MinMax(depth, min, max, move, isMaximizingPlayer) {
+    let list = this.boardModel.getPossibleMoves(isMaximizingPlayer);
+    if (depth===0 || list.length===0) {return new MinMaxMove(move, Scorer.score(list.length, depth)*(isMaximizingPlayer ? 1:-1));}
+
+    // sort moves by score value
+    list = this.sortMoves(list);
+
+    for (const iteration of list) {
+      this.boardModel.makeMove(iteration);
+      //console.log("scoore:", iteration.score)
+      isMaximizingPlayer = !isMaximizingPlayer
+      var bestScore = this.MinMax(depth-1, min, max, iteration, isMaximizingPlayer).score;
+      console.log(bestScore, min, max, isMaximizingPlayer)
+      this.boardModel.undoMove(iteration);
+
+      if (isMaximizingPlayer) {
+        min = Math.min(min, bestScore);
+        if (depth===MAX_DEPTH) {move = iteration;}
+        if (min<=max) {break;}
       } else {
-        this.castle.black=false;
-        this.castle.cB++;
+        max = Math.max(max, bestScore);
+        if (depth===MAX_DEPTH) {move = iteration;}
+        if (min>=max) {break;}
       }
     }
-    this.printBoard();
-    Chess.movePiece(move, false);
-    Chess.moves.push(move);
-    this.isWhiteTurn = !this.isWhiteTurn;
-    this.#getPossibleMoves();
-  }
-  UndoBoardMove(move){
-    console.info("Undo Move", move.toString());
-    this.#undoMove(move);
-    this.printBoard();
-    Chess.movePiece(move, true);
-    this.isWhiteTurn = !this.isWhiteTurn;
-    this.#getPossibleMoves();
+    if (isMaximizingPlayer) {return new MinMaxMove(move, min); }
+    else { return new MinMaxMove(move, max); }
   }
   //#endregion
 }
