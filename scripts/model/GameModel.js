@@ -13,16 +13,13 @@ class GameModel {
   static getInstance(){
     return this.#INSTANCE;
   }
-  
-  notifyListener(){
-    Chess.onGameChaged();
-  }
 
   newGame() {
     this.boardModel.newStandardChessBoard();
     this.isWhiteTurn = true;
     this.#moves = [];
     this.checks = [false, false];
+    Scorer.FlipTables();
   }
 
   makeMove(move) {
