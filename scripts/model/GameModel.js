@@ -1,4 +1,4 @@
-var MAX_DEPTH = 4;
+var MAX_DEPTH = 3;
 
 class GameModel {
   static #INSTANCE = new GameModel();

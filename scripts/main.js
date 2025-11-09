@@ -76,7 +76,7 @@ function drop(ev) {
     if (move.special.startsWith("=")) {GM.promotionSelection(move);}
     GM.makeMove(move);
     GM.nextTurn();
-    GM.boardModel.printBoard();
+    //GM.boardModel.printBoard();
   }
   from.piece.moves = [];
   legalSquares.forEach(s => s.classList.remove("selected"));
