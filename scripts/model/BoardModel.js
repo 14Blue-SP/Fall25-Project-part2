@@ -156,19 +156,7 @@ class BoardModel {
     // Pawn special move cases
     if (move.initial.piece instanceof Pawn) {
       if (!(move.initial.piece instanceof Pawn)) {return;}
-      if (move.special.startsWith("=")) {
-        var promPiece=undefined;
-        const promChar = move.special.charAt(move.special.length-1);
-        switch (promChar) {
-          case 'Q': promPiece=new Queen(move.isWhite); break;
-          case 'N': promPiece=new Knight(move.isWhite); break;
-          case 'B': promPiece=new Bishop(move.isWhite); break;
-          case 'R': promPiece=new Rook(move.isWhite); break;
-        }
-        promPiece.moves = move.initial.piece.moves;
-        move.initial.piece = promPiece;
-      }
-      
+
       // enPassant
       let direction = move.initial.piece.dir;
       if(move.special==="e.p."){
@@ -180,6 +168,20 @@ class BoardModel {
         this.enPassantSquare = this.getElement(move.target.col, move.target.row-direction);
       } else {
         this.enPassantSquare = undefined;
+      }
+
+      // Promotion
+      if (move.special.startsWith("=")) {
+        var promPiece=undefined;
+        const promChar = move.special.charAt(move.special.length-1);
+        switch (promChar) {
+          case 'Q': promPiece=new Queen(move.isWhite); break;
+          case 'N': promPiece=new Knight(move.isWhite); break;
+          case 'B': promPiece=new Bishop(move.isWhite); break;
+          case 'R': promPiece=new Rook(move.isWhite); break;
+        }
+        promPiece.moves = move.initial.piece.moves;
+        move.initial.piece = promPiece;
       }
     }
 
@@ -260,6 +262,12 @@ class BoardModel {
   }
 
   undoMove(move) {
+    // undo promotion
+    if (move.special.startsWith("=")) {
+      move.initial.piece = new Pawn(move.isWhite);
+      if (!GM.playerIsWhite) {move.initial.piece.dir *= -1;}
+    }
+
     // update Board
     this.setElement(move.initial);
     this.setElement(move.target);
@@ -273,26 +281,24 @@ class BoardModel {
       }
     }
 
-    // undo promotion
-    if (move.special.startsWith("=")) {
-      move.initial.piece = new Pawn(move.isWhite);
-    }
-
+    // Undo Pawn Move special cases
+    if (move.initial.piece instanceof Pawn) {
     // undo enPassant
-    if(move.special==="e.p.")  {
-      let direction = move.initial.piece.dir;
-      this.getElement(move.target.col, move.target.row-direction).piece=move.target.piece;
-      this.getElement(move.target.col, move.target.row).piece=undefined;
-    }
+      if(move.special==="e.p.")  {
+        let direction = move.initial.piece.dir;
+        this.getElement(move.target.col, move.target.row-direction).piece=move.target.piece;
+        this.getElement(move.target.col, move.target.row).piece=undefined;
+      }
 
-    // Update enPassant square
-    const prevMove = GM.getMoves().length===0 ? undefined : GameModel.getInstance().getMoves()[0];
-    if (prevMove!==undefined && prevMove.initial.piece instanceof Pawn) {
-      let direction = prevMove.initial.piece.dir;
-      if(Math.abs(prevMove.target.row-prevMove.initial.row)==2) {
-        this.enPassantSquare = this.getElement(prevMove.target.col, prevMove.target.row-direction);
-      } else {
-        this.enPassantSquare = undefined;
+      // Update enPassant square
+      const prevMove = GM.getMoves().length===0 ? undefined : GM.getMoves()[0];
+      if (prevMove!==undefined && prevMove.initial.piece instanceof Pawn) {
+        let direction = prevMove.initial.piece.dir;
+        if(Math.abs(prevMove.target.row-prevMove.initial.row)==2) {
+          this.enPassantSquare = this.getElement(prevMove.target.col, prevMove.target.row-direction);
+        } else {
+          this.enPassantSquare = undefined;
+        }
       }
     }
 

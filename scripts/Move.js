@@ -46,6 +46,6 @@ class MinMaxMove extends Move {
   }
 
   toString() {
-    return `${this.super.toString()}, Score: ${this.score}`;
+    return `${super.toString()}, Score: ${this.score}`;
   }
 }

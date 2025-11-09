@@ -90,58 +90,70 @@ class Scorer {
   //#endregion
 
   static score(numMoves, depth) {
-    let score=0, material=Scorer.calculateMaterial(true);
+    var score=0;
+    score += Scorer.calculateMaterial();
     score += Scorer.calculateAttack(true);
-    score += material;
-    score += Scorer.calculateMoveability(numMoves, depth, material, true);
+    score += Scorer.calculateMoveability(numMoves, depth, true);
     score += Scorer.calculatePosition(true);
-    material=Scorer.calculateMaterial(false);
+
     score -= Scorer.calculateAttack(false);
-    score += material;
-    score -= Scorer.calculateMoveability(numMoves, depth, material, false);
+    score -= Scorer.calculateMoveability(numMoves, depth, false);
     score -= Scorer.calculatePosition(false);
     return -(score + depth*50);
   }
 
   static calculateAttack(isWhite) {
-    var board = GM.boardModel;
-    let score=0;
-    let temp = board.whiteKing;
+    const board = GM.boardModel;
+    var score=0;
     for (let i = 0; i < board.getBoard().length; i++) {
       let square = board.getBoard()[i]; 
       if (square.isEmpty()) { continue; }
       if (square.piece.isWhite===isWhite) {
+        let attacked = this.checkSpace(board, isWhite, square);
         switch (square.piece.name) {
-          case "pawn": {board.whiteKing=square; if(board.CS.isCheck(true)){score -= 65;}} break;
-          case "knight": {board.whiteKing=square; if(board.CS.isCheck(true)){score -= 300;}} break;
-          case "bishop": {board.whiteKing=square; if(board.CS.isCheck(true)){score -= 300;}} break;
-          case "rook": {board.whiteKing=square; if(board.CS.isCheck(true)){score -= 500;}} break;
-          case "queen": {board.whiteKing=square; if(board.CS.isCheck(true)){score -= 900;}} break;
+          case "pawn": {if(attacked){score -= 65;}} break;
+          case "knight": {if(attacked){score -= 300;}} break;
+          case "bishop": {if(attacked){score -= 300;}} break;
+          case "rook": {if(attacked){score -= 500;}} break;
+          case "queen": {if(attacked){score -= 900;}} break;
         }
       }
     }
-    board.whiteKing = temp;
     if (board.CS.isCheck(isWhite)){score -= 200;}
     return parseInt(score/2);
   }
 
-  static calculateMaterial(isWhite) {
-    var board = GM.boardModel;
-    let score=0;
+  static checkSpace(board, isWhite, square) {
+    let temp = isWhite ? board.whiteKing:board.blackKing;
+    if (isWhite) {
+      board.whiteKing = square;
+    } else {
+      board.blackKing = square;
+    }
+    const safe = board.CS.isCheck(isWhite);
+    if (isWhite) {
+      board.whiteKing = temp;
+    } else {
+      board.blackKing = temp;
+    }
+    return safe;
+  }
+
+  static calculateMaterial() {
+    const board = GM.boardModel;
+    var score=0;
     for (let i=0; i<board.getBoard().length; i++) {
       let square = board.getBoard()[i];
       if (!square.isEmpty()) {
-        if (square.piece.isWhite == isWhite) {
-          score += square.piece.value;
-        }
+        score += square.piece.value;
       }
     }
     return score;
   }
 
   static calculatePosition(isWhite) {
-    var board = GM.boardModel;
-    let score=0;
+    const board = GM.boardModel;
+    var score=0;
     for (let i = 0; i < board.getBoard().length; i++) {
       let square = board.getBoard()[i];
       if (square.isEmpty()) { continue; }
@@ -162,9 +174,9 @@ class Scorer {
     return score;
   }
 
-  static calculateMoveability(numMoves, depth, material, isWhite) {
+  static calculateMoveability(numMoves, depth, isWhite) {
     let state = GM.boardModel.getState();
-    let score = 0;
+    var score = 0;
     score+=numMoves*5;
     if (numMoves===0) {
       if ((state===1 && !isWhite) || (state===2 && isWhite)) {

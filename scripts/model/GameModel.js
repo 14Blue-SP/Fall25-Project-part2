@@ -26,7 +26,7 @@ class GameModel {
     this.boardModel.makeMove(move);
     this.#moves.unshift(move);
     this.getState();
-    MovePiece(move.initial, move.target);
+    MovePiece(move, false);
 
     // Pawn Promotion
     if (move.special.startsWith("=")) {
@@ -131,19 +131,23 @@ class GameModel {
   computerMove(){
     if (this.isPlaying && (this.isWhiteTurn===!this.playerIsWhite)) {
       let s = this.boardModel.getElement(0,0);
-      this.makeMove((this.MinMax(MAX_DEPTH, 100000, -100000, new Move(s,s), this.isWhiteTurn)));
+      console.info("Computer is thinking...");
+      console.time("Computer Move Time");
+      this.makeMove((this.MinMax(MAX_DEPTH, Number.MAX_VALUE, Number.MIN_VALUE, new Move(s,s), this.isWhiteTurn)));
+      console.timeEnd("Computer Move Time");
       this.nextTurn();
-      this.boardModel.printBoard();
+      console.info("Computer has moved. ", this.#moves[0].toString());
+      //this.boardModel.printBoard();
     }
   }
 
   sortMoves(list) {
     for (let move of list) {
       this.boardModel.makeMove(move);
-      move.score = Scorer.score(-1, 0)*(list[0].isWhite ? 1:-1);
+      move.score = Scorer.score(-1, 0)*(move.isWhite ? 1:-1);
       this.boardModel.undoMove(move);
     }
-    list.sort((a,b) => a.score - b.score);
+    list.sort((a,b) => b.score - a.score);
     return list;
   }
 
@@ -151,28 +155,30 @@ class GameModel {
     let list = this.boardModel.getPossibleMoves(isMaximizingPlayer);
     if (depth===0 || list.length===0) {return new MinMaxMove(move, Scorer.score(list.length, depth)*(isMaximizingPlayer ? 1:-1));}
 
+    // shuffle moves to add variability
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
     // sort moves by score value
     list = this.sortMoves(list);
 
-    for (const iteration of list) {
+    for (let iteration of list) {
       this.boardModel.makeMove(iteration);
-      //console.log("scoore:", iteration.score)
-      isMaximizingPlayer = !isMaximizingPlayer
-      var bestScore = this.MinMax(depth-1, min, max, iteration, isMaximizingPlayer).score;
-      console.log(bestScore, min, max, isMaximizingPlayer)
+      var bestScore = this.MinMax(depth-1, min, max, iteration, !isMaximizingPlayer).score;
       this.boardModel.undoMove(iteration);
 
-      if (isMaximizingPlayer) {
+      if (!isMaximizingPlayer) {
         min = Math.min(min, bestScore);
         if (depth===MAX_DEPTH) {move = iteration;}
-        if (min<=max) {break;}
+        if (max <= min) { break; }
       } else {
         max = Math.max(max, bestScore);
         if (depth===MAX_DEPTH) {move = iteration;}
-        if (min>=max) {break;}
+        if (max >= min) { break; }
       }
     }
-    if (isMaximizingPlayer) {return new MinMaxMove(move, min); }
+    if (!isMaximizingPlayer) {return new MinMaxMove(move, min); }
     else { return new MinMaxMove(move, max); }
   }
   //#endregion

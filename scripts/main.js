@@ -22,10 +22,10 @@ function UndoMove(ev) {
   if(ev.key === ' ') {
     if (GM.getMoves().length===0) {return;}
     let move = GM.undoMove();
-    MovePiece(move.target, move.initial, true);
+    MovePiece(move, true);
     if (GM.computerGame) {
       move = GM.undoMove();
-      if (move !== undefined) {MovePiece(move.target, move.initial, true);}
+      if (move !== undefined) {MovePiece(move, true);}
       if (GM.getMoves().length===0) {GM.isWhiteTurn=true; GM.computerMove();}
       return;
     }
@@ -86,20 +86,30 @@ function drop(ev) {
 }
 //#endregion
 
-function MovePiece(from, to, undo) {
+function MovePiece(move, undo) {
   const _pieces = Array.from(pieces);
   const _squares = Array.from(squares);
+
+  var from, to;
+  if (!undo) {from = move.initial, to = move.target;}
+  else {from = move.target, to = move.initial;}
 
   if (undo) {
     if (!from.isEmpty()){
       BoardView.makePiece(from);
     }
+
+    if (move.special.startsWith("=")) {
+      BoardView.makePiece(to);
+      console.log(`Undo special move:}`, from, to);
+      return;
+    }
   }
   
-  if (from instanceof Square) {
-    from = _pieces.find(p=>p.id.split(" ")[1]===getSquareCoordinate(from.col,from.row)).id;
-    to = _squares.find(s=>s.id===getSquareCoordinate(to.col,to.row));
-  }
+  
+  from = _pieces.find(p=>p.id.split(" ")[1]===getSquareCoordinate(from.col,from.row)).id;
+  to = _squares.find(s=>s.id===getSquareCoordinate(to.col,to.row));
+
   from = _pieces.find(p=>p.id===from);
   to.replaceChildren(from);
   from.dataset.position = from.parentElement.id;
