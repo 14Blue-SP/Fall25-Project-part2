@@ -9,27 +9,18 @@
 <body>
     <h1>Chess Engine</h1>
     <div class="vbox">
-        <ul>
-            <a href="game.html">New Game</a>
-        </ul>
-        <ul>
-            <a herf="">Load Game</a>
-        </ul>
+        <ul id="newGame">New Game</ul>
+        <ul id="loadGame">Load Game</ul>
     </div>
-    
-  <!-- 
-  
-  
-  <select id="mode">
-    <option value="1">Human vs. Human</option>
-    <option value="2">Human vs. Computer</option>
-    <option value="3">Computer vs. Human</option>
-    <option value="4">Computer vs. Computer</option>
-  </select>
-  <div id="container"></div>
-  <button id="game">New Game</button>
-  -->
 
-    
+    <script src="scripts/model/Scorer.js"></script>
+    <script src="scripts/model/CheckScanner.js"></script>
+    <script src="scripts/model/BoardModel.js"></script>
+    <script src="scripts/model/GameModel.js"></script>
+    <script src="scripts/Move.js"></script>
+    <script src="scripts/Pieces.js"></script>
+    <script src="scripts/Square.js"></script>
+    <script src="scripts/BoardView.js"></script>
+    <script src="scripts/main.js"></script>
 </body>
 </html>

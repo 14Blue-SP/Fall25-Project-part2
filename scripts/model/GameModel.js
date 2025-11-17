@@ -15,10 +15,46 @@ class GameModel {
   }
 
   newGame() {
+    let result = parseInt(prompt("What kind of game do you want to play?\n0:Player vs Player -- 1:Player vs Computer"));
+    if (result===1) {this.computerGame=true;} else {this.computerGame=false;}
+
+    if (this.computerGame) {
+      result = parseInt(prompt("Do you want to play as 0:White or 1:Black?"));
+      if (result===1) {this.playerIsWhite=false;} else {this.playerIsWhite=true;}
+    }
+
     this.boardModel.newStandardChessBoard();
     this.isWhiteTurn = true;
     this.#moves = [];
     this.checks = [false, false];
+    Scorer.FlipTables();
+  }
+
+  serializeGame() {
+    return {
+      computerGame: this.computerGame,
+      playerIsWhite: this.playerIsWhite,
+      isWhiteTurn: this.isWhiteTurn,
+      checks: this.checks,
+      moves: this.#moves.map(m => m.serializeMove()),
+      board: this.boardModel.serializeBoard()
+    }
+  }
+
+  loadGame(data) {
+    this.computerGame = data.computerGame;
+    this.playerIsWhite = data.playerIsWhite;
+    this.isWhiteTurn = data.isWhiteTurn;
+    this.checks = data.checks;
+    this.boardModel.newStandardChessBoard();
+    data.moves.reverse().forEach(m => {
+      let initial = this.boardModel.getElement(m.initial.col, m.initial.row);
+      let target = this.boardModel.getElement(m.target.col, m.target.row);
+      let move = new Move(initial, target);
+      this.boardModel.makeMove(move);
+      this.#moves.unshift(move);
+    });
+    
     Scorer.FlipTables();
   }
 
@@ -163,23 +199,23 @@ class GameModel {
     // sort moves by score value
     list = this.sortMoves(list);
 
+    isMaximizingPlayer = !isMaximizingPlayer;
     for (let iteration of list) {
       this.boardModel.makeMove(iteration);
-      var bestScore = this.MinMax(depth-1, min, max, iteration, !isMaximizingPlayer).score;
+      var bestScore = this.MinMax(depth-1, min, max, iteration, isMaximizingPlayer).score;
       this.boardModel.undoMove(iteration);
 
-      if (!isMaximizingPlayer) {
-        min = Math.min(min, bestScore);
-        if (depth===MAX_DEPTH) {move = iteration;}
-        if (max <= min) { break; }
-      } else {
+      if (isMaximizingPlayer) {
         max = Math.max(max, bestScore);
         if (depth===MAX_DEPTH) {move = iteration;}
-        if (max >= min) { break; }
+      } else {
+        min = Math.min(min, bestScore);
+        if (depth===MAX_DEPTH) {move = iteration;}
       }
+      if (max >= min) { break; }
     }
-    if (!isMaximizingPlayer) {return new MinMaxMove(move, min); }
-    else { return new MinMaxMove(move, max); }
+    if (isMaximizingPlayer) {return new MinMaxMove(move, max); }
+    else { return new MinMaxMove(move, min); }
   }
   //#endregion
 }

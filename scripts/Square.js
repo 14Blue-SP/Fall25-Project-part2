@@ -21,4 +21,12 @@ class Square {
 
     return this.row===o.row && this.col===o.col;
   }
+
+  serializeSquare() {
+    let pieceData = ' ';
+    if (this.piece !== undefined) {
+      pieceData = this.piece.serializePiece();
+    }
+    return pieceData;
+  }
 }

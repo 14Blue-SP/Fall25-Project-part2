@@ -36,6 +36,15 @@ class Move {
       default : return ' ';
     }
   }
+
+  serializeMove() {
+    return {
+      initial: {col: this.initial.col, row: this.initial.row},
+      target: {col: this.target.col, row: this.target.row},
+      isWhite: this.isWhite,
+      special: this.special
+    }
+  }
 }
 
 class MinMaxMove extends Move {

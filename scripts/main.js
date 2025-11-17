@@ -1,5 +1,24 @@
+var game;
+const GM = GameModel.getInstance();
+var type; // "new" or "load"
+
+const save=document.getElementById("save");
+const restart=document.getElementById("new");
 document.addEventListener('keyup', UndoMove);
-game = new BoardView();
+if (save) {save.addEventListener("click", saveGame);}
+if (restart) {restart.addEventListener("click", ()=>localStorage.setItem("gameType", "new"));}
+
+const load = document.getElementById("loadGame");
+const newGame = document.getElementById("newGame");
+
+if (newGame) {newGame.addEventListener("click", makeBoard);}
+if (load) {load.addEventListener("click", makeBoard);}
+
+function makeBoard(ev) {
+  type = ev.target.id==="newGame" ? "new" : "load";
+  localStorage.setItem("gameType", type);
+  window.location.href = "game.html";
+}
 
 function isUpperCase(str) {
   str = String(str)
@@ -17,6 +36,19 @@ function getCoordinates(str){
 }
 
 //#region Event Handlers
+function saveGame() {
+  let saveData = JSON.stringify(GM.serializeGame());
+  localStorage.setItem("savedGame", JSON.stringify(GM.serializeGame()));
+  console.info("Saved Game");
+}
+
+function loadGame() {
+  let saveData = localStorage.getItem("savedGame");
+  if (saveData===null) {console.warn("No saved game found"); return;}
+  GM.loadGame(JSON.parse(saveData));
+  console.info("Loaded Game");
+}
+
 function UndoMove(ev) {
   if (!GM.isPlaying) {return;}
   if(ev.key === ' ') {
@@ -105,8 +137,6 @@ function MovePiece(move, undo) {
       return;
     }
   }
-  
-  
   from = _pieces.find(p=>p.id.split(" ")[1]===getSquareCoordinate(from.col,from.row)).id;
   to = _squares.find(s=>s.id===getSquareCoordinate(to.col,to.row));
 

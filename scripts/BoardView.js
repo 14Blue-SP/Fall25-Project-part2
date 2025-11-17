@@ -1,30 +1,32 @@
-const GM=GameModel.getInstance();
-
 const board=document.getElementById("chessBoard");
 const squares=document.getElementsByClassName("square");
 const pieces=document.getElementsByClassName("piece");
 
 var legalSquares=[];
 
+window.onload = function() {
+  if (board) {
+    GM.type = localStorage.getItem("gameType") || "new";
+    game = new BoardView(GM.type);
+  }
+}
+
 class BoardView {
-  constructor() {
+  constructor(type) {
     this.board = GM.boardModel;
-    this.init();
+    this.init(type);
   }
 
-  init() {
-    let result = parseInt(prompt("What kind of game do you want to play?\n0:Player vs Player -- 1:Player vs Computer"));
-    if (result===1) {GM.computerGame=true;} else {GM.computerGame=false;}
-
-    if (GM.computerGame) {
-      result = parseInt(prompt("Do you want to play as 0:White or 1:Black?"));
-      if (result===1) {GM.playerIsWhite=false;} else {GM.playerIsWhite=true;}
+  init(type) {
+    if (type==="new") {
+      GM.newGame();
     }
-
+    if (type==="load") {
+      loadGame();
+    }
     this.createBoard();
     this.drawCorodinates();
-    GM.newGame();
-    this.createPieces();
+    BoardView.createPieces();
     if (GM.computerGame && GM.isWhiteTurn===!GM.playerIsWhite) {GM.computerMove();}
   }
   
@@ -67,7 +69,10 @@ class BoardView {
     }
   }
 
-  createPieces() {
+  static createPieces() {
+    const _squares = Array.from(squares);
+    //pieces.forEach();
+    _squares.forEach(s => s.replaceChildren());
     GM.boardModel.getBoard().forEach( square => {
       if (!square.isEmpty()){
         BoardView.makePiece(square);

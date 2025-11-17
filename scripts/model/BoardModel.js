@@ -60,10 +60,8 @@ class BoardModel {
     this.blackKing = this.getElement(4, 0);
 
     this.castle = [true, true, true, true];
-    console.info("New Chess Game: Standard Board Created");
     if (!GM.playerIsWhite) {this.flipBoard();}
-
-    this.printBoard();
+    //this.printBoard();
   }
 
   printBoard(){
@@ -114,6 +112,44 @@ class BoardModel {
 
     this.whiteKing = this.getElement(3, 0);
     this.blackKing = this.getElement(3, 7);
+  }
+
+  serializeBoard() {
+    let boardData = [];
+    for (let square of this.#board) {
+      boardData.push(square.serializeSquare()); 
+    }
+    return {files:this.files, ranks:this.ranks, castle: this.castle, enPassant: this.enPassantSquare ? {col: this.enPassantSquare.col, row: this.enPassantSquare.row} : null, board: boardData};
+  }
+
+  loadBoard(data) {
+    this.files = data.files;
+    this.ranks = data.ranks;
+    this.castle = data.castle;
+    if (data.enPassant !== null) {
+      this.enPassantSquare = this.getElement(data.enPassant.col, data.enPassant.row);
+    }
+    //console.log(this.#board);
+    for (let i=0; i<data.board.length; i++) {
+      let coords = this.getCoordinates(i);
+      let sqData = data.board[i];
+      let piece = undefined;
+      switch (sqData.toLowerCase()) {
+        case 'p' : piece = new Pawn(sqData === sqData.toUpperCase()); break;
+        case 'n' : piece = new Knight(sqData === sqData.toUpperCase()); break;
+        case 'b' : piece = new Bishop(sqData === sqData.toUpperCase()); break;
+        case 'r' : piece = new Rook(sqData === sqData.toUpperCase()); break;
+        case 'q' : piece = new Queen(sqData === sqData.toUpperCase()); break;
+        case 'k' : piece = new King(sqData === sqData.toUpperCase()); break;
+      }
+      let square = new Square(coords.File, coords.Rank, piece);
+      this.setElement(square);
+
+      if (piece instanceof King) {
+        if (piece.isWhite) {this.whiteKing = square;}
+        else {this.blackKing = square;}
+      }
+    }
   }
   //#endregion
 
@@ -372,8 +408,7 @@ class BoardModel {
     }
 
     // 50 moves
-    let moveCount = Math.floor(GM.getMoves().length/2);
-    if (moveCount >= 50) { return 3; }
+    if (this.checkMoves()) { return 3; }
 
     // 3 move repetition
     if (this.checkRepetition(GM.isWhiteTurn) && this.checkRepetition(!GM.isWhiteTurn)) { return 3; }
@@ -381,6 +416,20 @@ class BoardModel {
     // not enough material
     if (this.countMaterial()){return 3;}
     return 0;
+  }
+
+  checkMoves() {
+    if (GM.getMoves().length<50) { return false; }
+    let moves = GM.getMoves();
+    let count=0;
+    for (let i=0; i<moves.length; i++) {
+      if (moves[i].initial.piece instanceof Pawn || !moves[i].target.isEmpty()) {
+        break;
+      }
+      count++;
+      if (count>=50) {return true;}
+    }
+    return false;
   }
 
   checkRepetition(isWhite){

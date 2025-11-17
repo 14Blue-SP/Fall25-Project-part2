@@ -65,6 +65,21 @@ class Piece {
   toString() {
     return `${this.isWhite ? "White":"Black"} ${this.name}|${this.value} points`;
   }
+
+  serializePiece() {
+    let c;
+    switch(this.name) {
+      case "pawn": c = 'p'; break;
+      case "rook": c = 'r'; break;
+      case "knight": c = 'n'; break;
+      case "bishop": c = 'b'; break;
+      case "queen": c = 'q'; break;
+      case "king": c = 'k'; break;
+      default: c = ' '; break;
+    }
+    c = this.isWhite ? c.toUpperCase() : c;
+    return c;
+  }
 }
 //#endregion
 

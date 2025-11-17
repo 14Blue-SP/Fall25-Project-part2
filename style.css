@@ -39,6 +39,9 @@ h2{
 
 ul {
   list-style-type: none;
+  padding: 5%;
+  display: block;
+  text-align: center;
 }
 
 a {
@@ -59,6 +62,9 @@ a {
   border: 0.3rem solid var(--mcol3);
   border-radius: 1rem;
   background-color: var(--mcol2);
+  font-weight: bold;
+  font-size: 3rem;
+  color: var(--mcol0);
   transition: background-color 0.3s ease-out;
 }
 .vbox a{
