@@ -202,7 +202,9 @@ class GameModel {
     isMaximizingPlayer = !isMaximizingPlayer;
     for (let iteration of list) {
       this.boardModel.makeMove(iteration);
+      Scorer.FlipTables();
       var bestScore = this.MinMax(depth-1, min, max, iteration, isMaximizingPlayer).score;
+      Scorer.FlipTables();
       this.boardModel.undoMove(iteration);
 
       if (isMaximizingPlayer) {
